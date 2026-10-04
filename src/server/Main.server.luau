@@ -7,6 +7,7 @@ local StarterPlayer = game:GetService("StarterPlayer")
 
 local Config = require(ReplicatedStorage.Shared.Config)
 local MapBuilder = require(script.Parent.MapBuilder)
+local PropLoader = require(script.Parent.PropLoader)
 local DataService = require(script.Parent.DataService)
 local State = require(script.Parent.State)
 local Passes = require(script.Parent.Passes)
@@ -19,6 +20,7 @@ StarterPlayer.CharacterUseJumpPower = false
 StarterPlayer.CharacterJumpHeight = Config.JumpHeight
 StarterPlayer.CharacterWalkSpeed = Config.BaseWalkSpeed
 
+PropLoader.load(8)
 local layout = MapBuilder.build()
 
 -- Remotes

@@ -8,12 +8,12 @@ local Sfx = {}
 
 local IDS: { [string]: number } = {
 	tick = 0,
-	gate = 0,
-	wins = 0,
-	buy = 0,
-	error = 0,
-	rebirth = 0,
-	lap = 0,
+	gate = 82508232118513,
+	wins = 84896431530730,
+	buy = 110411125682552,
+	error = 120527728848426,
+	rebirth = 124698389615184,
+	lap = 133366217740292,
 }
 Sfx.IDS = IDS
 
