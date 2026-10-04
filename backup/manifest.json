@@ -1,1 +1,1 @@
-{"liveVersion": 24, "commit": "5d8c18e", "sha256_16": "b4ab429d2d0a080e", "note": "Built with rojo from the same source tree that was published as place version 24 (only docs changed after 5662e65)."}
+{"liveVersion": 30, "commit": "3a986a9", "sha256_16_published_bytes": "6b1f0634ca717bc5", "sha256_16_backup": "6b1f0634ca717bc5", "note": "backup/last-known-good.rbxl is a byte copy of game.rbxl, the exact file tools/publish.py uploaded as place version 30 at 02:01:32 (source = commit above). Previous good: tag live-v24."}
