@@ -67,19 +67,19 @@ Config.DailyStreakWindow = 48 * 3600
 -- Monetization. IDs are filled in after creation (see MONETIZATION.md).
 export type Pass = { Id: number, Name: string, Price: number, Desc: string }
 Config.Passes = {
-	Speed2x = { Id = 0, Name = "2x Speed", Price = 149, Desc = "Double Speed gain forever" },
-	Wins2x = { Id = 0, Name = "2x Wins", Price = 199, Desc = "Double Wins from every pad" },
-	VIP = { Id = 0, Name = "VIP", Price = 99, Desc = "Gold VIP trail, 1.25x Speed, [VIP] tag" },
+	Speed2x = { Id = 2006253072, Name = "2x Speed", Price = 149, Desc = "Double Speed gain forever" },
+	Wins2x = { Id = 2005263080, Name = "2x Wins", Price = 199, Desc = "Double Wins from every pad" },
+	VIP = { Id = 2004981019, Name = "VIP", Price = 99, Desc = "Gold VIP trail, 1.25x Speed, [VIP] tag" },
 } :: { [string]: Pass }
 Config.PassOrder = { "Speed2x", "Wins2x", "VIP" }
 
 export type Product = { Id: number, Name: string, Price: number, Desc: string }
 Config.Products = {
-	SpeedBurst = { Id = 0, Name = "Speed Burst", Price = 25, Desc = "Instantly get 5 minutes of Speed" },
-	SkipStage = { Id = 0, Name = "Skip Stage", Price = 29, Desc = "Jump past the next gate" },
-	Potion3x = { Id = 0, Name = "3x Speed Potion", Price = 39, Desc = "3x Speed gain for 10 minutes" },
-	WinsS = { Id = 0, Name = "750 Wins", Price = 49, Desc = "+750 Wins" },
-	WinsL = { Id = 0, Name = "5,000 Wins", Price = 149, Desc = "+5,000 Wins" },
+	SpeedBurst = { Id = 3716391390, Name = "Speed Burst", Price = 25, Desc = "Instantly get 5 minutes of Speed" },
+	SkipStage = { Id = 3716391393, Name = "Skip Stage", Price = 29, Desc = "Jump past the next gate" },
+	Potion3x = { Id = 3716391395, Name = "3x Speed Potion", Price = 39, Desc = "3x Speed gain for 10 minutes" },
+	WinsS = { Id = 3716391399, Name = "750 Wins", Price = 49, Desc = "+750 Wins" },
+	WinsL = { Id = 3716391402, Name = "5,000 Wins", Price = 149, Desc = "+5,000 Wins" },
 } :: { [string]: Product }
 Config.ProductOrder = { "SpeedBurst", "SkipStage", "Potion3x", "WinsS", "WinsL" }
 

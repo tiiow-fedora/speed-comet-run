@@ -1,0 +1,128 @@
+{
+ "passes": {
+  "Speed2x": {
+   "gamePassId": 2006253072,
+   "name": "2x Speed",
+   "description": "Double your Speed gain forever.",
+   "isForSale": true,
+   "iconAssetId": 133448903949274,
+   "createdTimestamp": "2026-10-04T05:45:53.146Z",
+   "updatedTimestamp": "2026-10-04T05:45:53.146Z",
+   "priceInformation": {
+    "defaultPriceInRobux": 149,
+    "enabledFeatures": []
+   },
+   "isManagedPricingEnabled": false
+  },
+  "Wins2x": {
+   "gamePassId": 2005263080,
+   "name": "2x Wins",
+   "description": "Double the Wins from every pad and the finish, forever.",
+   "isForSale": true,
+   "iconAssetId": 133448903949274,
+   "createdTimestamp": "2026-10-04T05:45:53.677Z",
+   "updatedTimestamp": "2026-10-04T05:45:53.677Z",
+   "priceInformation": {
+    "defaultPriceInRobux": 199,
+    "enabledFeatures": []
+   },
+   "isManagedPricingEnabled": false
+  },
+  "VIP": {
+   "gamePassId": 2004981019,
+   "name": "VIP",
+   "description": "Gold VIP trail, 1.25x Speed gain and a [VIP] chat tag.",
+   "isForSale": true,
+   "iconAssetId": 133448903949274,
+   "createdTimestamp": "2026-10-04T05:45:54.229Z",
+   "updatedTimestamp": "2026-10-04T05:45:54.229Z",
+   "priceInformation": {
+    "defaultPriceInRobux": 99,
+    "enabledFeatures": []
+   },
+   "isManagedPricingEnabled": false
+  }
+ },
+ "products": {
+  "SpeedBurst": {
+   "productId": 3716391390,
+   "name": "Speed Burst",
+   "description": "Instantly get 5 minutes' worth of your current Speed gain (at least +250).",
+   "iconImageAssetId": 88963008124478,
+   "universeId": 10769274719,
+   "isForSale": true,
+   "priceInformation": {
+    "defaultPriceInRobux": 25,
+    "enabledFeatures": []
+   },
+   "isImmutable": false,
+   "createdTimestamp": "2026-10-04T05:45:54.85Z",
+   "updatedTimestamp": "2026-10-04T05:45:54.85Z",
+   "isManagedPricingEnabled": false
+  },
+  "SkipStage": {
+   "productId": 3716391393,
+   "name": "Skip Stage",
+   "description": "Raises your Speed to the next gate's requirement and moves you past it.",
+   "iconImageAssetId": 88963008124478,
+   "universeId": 10769274719,
+   "isForSale": true,
+   "priceInformation": {
+    "defaultPriceInRobux": 29,
+    "enabledFeatures": []
+   },
+   "isImmutable": false,
+   "createdTimestamp": "2026-10-04T05:45:55.466Z",
+   "updatedTimestamp": "2026-10-04T05:45:55.466Z",
+   "isManagedPricingEnabled": false
+  },
+  "Potion3x": {
+   "productId": 3716391395,
+   "name": "3x Speed Potion",
+   "description": "3x Speed gain for 10 minutes. Extra potions add time.",
+   "iconImageAssetId": 88963008124478,
+   "universeId": 10769274719,
+   "isForSale": true,
+   "priceInformation": {
+    "defaultPriceInRobux": 39,
+    "enabledFeatures": []
+   },
+   "isImmutable": false,
+   "createdTimestamp": "2026-10-04T05:45:56.149Z",
+   "updatedTimestamp": "2026-10-04T05:45:56.149Z",
+   "isManagedPricingEnabled": false
+  },
+  "WinsS": {
+   "productId": 3716391399,
+   "name": "750 Wins",
+   "description": "+750 Wins.",
+   "iconImageAssetId": 88963008124478,
+   "universeId": 10769274719,
+   "isForSale": true,
+   "priceInformation": {
+    "defaultPriceInRobux": 49,
+    "enabledFeatures": []
+   },
+   "isImmutable": false,
+   "createdTimestamp": "2026-10-04T05:45:56.762Z",
+   "updatedTimestamp": "2026-10-04T05:45:56.762Z",
+   "isManagedPricingEnabled": false
+  },
+  "WinsL": {
+   "productId": 3716391402,
+   "name": "5,000 Wins",
+   "description": "+5,000 Wins.",
+   "iconImageAssetId": 88963008124478,
+   "universeId": 10769274719,
+   "isForSale": true,
+   "priceInformation": {
+    "defaultPriceInRobux": 149,
+    "enabledFeatures": []
+   },
+   "isImmutable": false,
+   "createdTimestamp": "2026-10-04T05:45:57.337Z",
+   "updatedTimestamp": "2026-10-04T05:45:57.337Z",
+   "isManagedPricingEnabled": false
+  }
+ }
+}
