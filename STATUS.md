@@ -21,8 +21,13 @@ Docs used: create.roblox.com/docs/cloud/reference/features/universes, /docs/clou
 | Place publishing | POST /universes/v1/{U}/places/{P}/versions with empty body | 500 (not 401/403 → scope present; proper test at publish time) ⚠️ likely OK |
 | Game pass read | GET /game-passes/v1/universes/{U}/game-passes/creator | 200 ✅ (none exist) |
 | Game pass write | POST create with no fields | 400 "Name required" (auth passed) ✅ |
-| Developer product read/write | GET list / POST create | **403 "Scope not authorized"** ❌ |
+| Developer product read/write | GET list / POST create | initially 403 "Scope not authorized"; added developer-product:read+write to existing key `clde` in Creator Hub 23:15 → now 200 / 400-validation ✅ |
 | Asset upload | POST /assets/v1/assets with no fields | 400 "FileContent required" (auth passed) ✅ |
 | Asset operation read | GET /assets/v1/operations/{fake} | 404 not found (auth passed) ✅ |
 
-Action: add developer-product read+write to the existing key in Creator Hub (Chrome). Fallback: create products in Creator Hub UI.
+Note: Creator Hub showed an "Unrestricted Experience Access" warning on save — the key already had no experience restriction (pre-existing). Recommend restricting it to this experience (see MORNING_REPORT).
+
+**All needed capabilities confirmed. Proceeding to Phase 1.**
+
+## Current phase
+Phase 1 Research (started ~23:20)
