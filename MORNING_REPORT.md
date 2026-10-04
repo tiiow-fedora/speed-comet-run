@@ -38,7 +38,7 @@ A "+1 Speed" incremental runner with an original low-gravity space theme. Resear
 7. **Cut from the design:** meteor hazards. Everything else on the cut list was built.
 8. **Thumbnails** are Studio captures (1112×626) upscaled to 1920×1080, so they're slightly soft.
 9. **Music** asset was still "Reviewing" at 00:58. If moderation rejects it, the game simply plays no music (no errors). The SFX are approved.
-10. **Your in-game progress is test data.** The owner profile was reset and played during QA (Speed ~500, Wins 55, daily claimed), and Player1/Player2 entries exist from local-server tests. It's harmless, but wipe it if you want a clean leaderboard. The leaderboard currently shows "tiiow".
+10. **Your in-game progress is test data.** The owner profile was reset with a Studio-only hook and then played during QA, so its numbers are test values. Player1/Player2 entries (UserIds -1/-2) exist from local-server tests. It's harmless, but wipe it if you want a clean leaderboard. The leaderboard currently shows "tiiow".
 11. Console is disabled in device access (the UI isn't gamepad-navigable yet).
 
 ## Things you need to do by hand
