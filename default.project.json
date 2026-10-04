@@ -1,0 +1,37 @@
+{
+  "name": "CometRun",
+  "tree": {
+    "$className": "DataModel",
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "Shared": { "$path": "src/shared" }
+    },
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "Server": { "$path": "src/server" }
+    },
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "Client": { "$path": "src/client" }
+      }
+    },
+    "Workspace": {
+      "$className": "Workspace",
+      "$properties": { "Gravity": 80 }
+    },
+    "Lighting": {
+      "$className": "Lighting",
+      "$properties": {
+        "ClockTime": 0,
+        "Brightness": 2,
+        "Ambient": [0.35, 0.35, 0.5],
+        "OutdoorAmbient": [0.45, 0.45, 0.6],
+        "GlobalShadows": true
+      }
+    },
+    "SoundService": { "$className": "SoundService" },
+    "Players": { "$className": "Players", "$properties": { "CharacterAutoLoads": true } }
+  }
+}

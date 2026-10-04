@@ -1,0 +1,5 @@
+23:40:26.440  [CometRun] server ready, 10 stages, track length 4519
+23:40:42.976  > game.ServerScriptService.DevRun:Invoke()
+PASS gate1 rejects speed 0 / pad1 pays wins / checkpoint=1 / pad1 no double claim / boot rejected when poor / boot bought / bad boot args ignored / equip owned boot / equip unowned rejected / tick adds >= 2/s with x2 boots / rebirth rejected when slow / rebirth works / fall returns to track / gate5 rejects 1000 speed / finish pays / finish returns to spawn / lap reset / WinsS handler / potion handler / burst handler / skip handler sets speed / skip handler teleports past gate
+23:40:54.262  DEVTEST DONE: 22 pass, 0 fail
+(DataStore: Studio API access enabled; no DataStore errors this run)
