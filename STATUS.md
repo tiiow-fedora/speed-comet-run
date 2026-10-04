@@ -49,3 +49,10 @@ Blocked: reach limited to 16+/trusted friends until engagement threshold or publ
 
 ## Follow-up status (final, 02:06)
 Live **v30** verified; backup = exact v30 bytes (tag live-v30). Done: PLAN_V2 items 1–5. Cut: 6–7 (turn budget). Blocked: nothing; reach limit still needs the owner's decision.
+
+
+# FOLLOW-UP RUN 3 (started 2026-10-04 12:36)
+**API key test (12:36, this run):** universe read 200 (PUBLIC), place read 200, game-pass read 200, dev-product read 200, thumbnail-personalization read 200 (3 thumbnails), asset create with empty body 400 (auth OK). All capabilities needed work.
+**Analytics 12:37:** 0 visits, no engagement/retention/revenue data ("No data for selected period"); reach 16+ and trusted friends. Too little data for conclusions.
+**Backup:** live = v30 = `backup/last-known-good.rbxl` (sha 6b1f0634ca717bc5); git tag `run3-start`.
+**Current item:** A (first 60 s) + B (bright map) + C (retention) as one release.
