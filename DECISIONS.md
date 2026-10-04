@@ -23,3 +23,15 @@
 - **01:44 Phone layout check uses screen height (<520 px)** as well as TouchEnabled/KeyboardEnabled. Studio's phone emulator reported a keyboard and put the grid at the desktop position.
 - **01:45 Merge R1 + R2 into one release**: the run has an 80-turn budget, and each publish + live check costs ~6 turns. One full checklist pass (DevTest, 2-client server, phone, 10-min session) covers both.
 - **01:45 Missing icons on two prompts**: all 5 product icons are "Approved" via the Assets API, so it's a Roblox thumbnail CDN delay. No change made.
+
+## Follow-up run 3 (2026-10-04)
+- **12:40 Priorities**: 0 visits means impressions → clicks (thumbnails/icon) and first-minute quality matter most. Retention systems mostly existed (daily, quests, friend boost, boards); I added only the missing visible pieces (streak strip, galaxy progress strip, next goal, weekly rotation).
+- **12:42 Daytime "pastel cosmos" look** (Atmosphere + day sky) instead of a black night sky. The brief asks for bright, saturated and inviting; the black sky made the first view dark. Tuned twice: haze 1.2→0.35 and bloom threshold 1.8→2.6 after neon washed out to white.
+- **12:42 Comet landmark uses Blender meshes** (CometHead/CometTail/SpawnArch via Open Cloud) and is warm-colored so it stands out against the blue sky.
+- **12:42 Stage-1 gaps 6 studs** (were 8–10): in my playtest, holding jump dropped me into stage-1 gaps twice in 20 s.
+- **12:42 Comet Shards** are validated by the server (position check, once per lap), reset with the existing lap path, and award Speed only, so there's no new economy or exploit surface.
+- **12:42 Weekly events come from a schedule in Config indexed by UTC week**. They rotate every Monday with no new build. Studio can force one with ReplicatedStorage attribute `ForceEvent`.
+- **12:42 Guide beam removed**: it still read as a yellow strip; the ⬇ marker is enough.
+- **13:05 Thumbnails rendered from the real layout** (Config-driven Blender scene with the game's meshes), so every element exists in the game. 3 homepage thumbnails (within Roblox's 2–5 advice) + 1 icon.
+- **13:06 No paid ads or promotion**: forbidden by the brief; listed as an owner decision.
+- **13:07 Bash heredocs with emoji/apostrophes failed to parse twice** → switched to writing script files and running them.

@@ -34,3 +34,12 @@ Loaded at server start by `src/server/PropLoader.luau` (InsertService:LoadAsset;
 | Pass/product icons 512x512 (8) | `art/make_icons.py` (PIL polygons + Arial Bold text; no emoji fonts or external art) | Uploaded with PATCH `imageFile` to each pass/product |
 
 Arial Bold (Windows system font) is only used to render text into the images; the font file itself is not distributed.
+
+## Run 3 additions
+| Name | Source | Asset ID | Moderation |
+|---|---|---|---|
+| CometHead | `blender/landmarks.py` (noise-displaced icosphere, 80 faces) | 95764825699862 | Approved |
+| CometTail | `blender/landmarks.py` (twisted 8-sided cone, 50 faces) | 125542314750590 | Approved |
+| SpawnArch | `blender/landmarks.py` (12-segment half arch, 72 faces) | 140335356772770 | Approved |
+| Homepage thumbnails x3 | `blender/thumbnails/render_thumbs.py` | 80754079463507, 116825158592566, 128942246979952 | Reviewing at upload |
+| Icon (icon_comet_track) | `blender/thumbnails/render_thumbs.py` | uploaded in Creator Hub | pending at upload |

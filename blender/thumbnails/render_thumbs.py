@@ -141,7 +141,7 @@ for zi, zz in zoneStart.items():
     ball(side * 700, Y + 150, zz + 300, 220, mat(zn["rock"]))
 ball(400, Y - 500, z * 0.5, 300, mat((0.24, 0.35, 0.78)))
 # comet landmark
-head = inst("CometHead", B(0, Y + 70, 340), 56, mat((1, 0.6, 0.25), 1.5))
+head = inst("CometHead", B(0, Y + 70, 340), 56, mat((1, 0.55, 0.2), 0.5))
 d = Vector((0, 0.42, 1)).normalized()
 t0 = templates["CometTail"]; dims = t0.dimensions
 ax = Vector((1, 0, 0)) if dims.x >= max(dims.y, dims.z) else (Vector((0, 1, 0)) if dims.y >= dims.z else Vector((0, 0, 1)))
@@ -158,7 +158,7 @@ def runner(x, y, z, trail=(0.47, 1, 0.55), leap=0.0):
     for side, ang in ((-1, 35), (1, -35)):
         parts.append(box(x + side * 1.5, y + 3 + leap, z, 1, 2, 1, skin, rot=(math.radians(ang), 0, 0)))
         parts.append(box(x + side * 0.5, y + 1 + leap, z, 1, 2, 1, pants, rot=(math.radians(-ang), 0, 0)))
-    parts.append(box(x, y + 2 + leap, z - 7, 1.6, 2.6, 12, mat(trail, 2, 0.55)))
+    # (boot trail omitted: a box stand-in read as a white plank in renders)
     return parts
 
 def cam(loc, target, lens=28):
@@ -169,13 +169,13 @@ def cam(loc, target, lens=28):
 
 shots = {
     # name: (camera rbx pos, target rbx pos, lens, size, runner pos or None, leap)
-    "thumb_spawn_hero": ((5, Y + 7, -34), (0, Y + 22, 250), 26, (1920, 1080), (-3, Y, -20), 0),
+    "thumb_spawn_hero": ((0, Y + 7, -38), (0, Y + 16, 250), 26, (1920, 1080), (0, Y, -14), 0),
     "thumb_gap_leap": ((26, Y + 6, 120), (0, Y + 2, 175), 26, (1920, 1080), (0, Y + 6, 150), 4),
     "thumb_aerial_track": ((160, Y + 260, -120), (0, Y, 900), 30, (1920, 1080), None, 0),
     "thumb_locked_gate": ((-14, Y + 8, gateZ[2] - 70), (0, Y + 12, gateZ[2]), 26, (1920, 1080), (0, Y, gateZ[2] - 40), 0),
     "thumb_mars_shards": ((18, Y + 12, gateZ[1] + 30), (0, Y, gateZ[1] + 200), 26, (1920, 1080), (0, Y, gateZ[1] + 70), 2),
     "thumb_event_horizon": ((-60, Y + 60, gateZ[10] - 260), (0, Y + 10, gateZ[12]), 30, (1920, 1080), None, 0),
-    "icon_runner_comet": ((4, Y + 5, -30), (0, Y + 30, 220), 30, (512, 512), (0, Y, -20), 0),
+    "icon_runner_comet": ((0, Y + 6, -34), (0, Y + 24, 220), 30, (512, 512), (0, Y, -16), 0),
     "icon_comet_track": ((0, Y + 30, 120), (0, Y + 68, 340), 34, (512, 512), None, 0),
     "icon_gate_runner": ((-10, Y + 6, gateZ[2] - 50), (0, Y + 13, gateZ[2]), 30, (512, 512), (0, Y, gateZ[2] - 32), 0),
 }

@@ -64,3 +64,13 @@ Currency and progress never come from the client. Speed is ticked by the server.
 - [x] Save migration: v1-format sample save keeps all values, gains v2 defaults; wrong types rejected
 - [x] Live v30: loads, core loop, quests, all 5 products + 3 passes prompt (`tests/live_check_v30.md`)
 - New checks added for v2: part budget, JUMP signs, decor CanTouch, migration ×3, quests ×7, BestSpeed
+
+
+# V3 release (v32) checklist, follow-up run 3
+- [x] DevTest 58/58: desktop Play 12:45, iPhone 7 emulator 12:48, 2-client server 13:01 (`tests/release_v3_checklist.log`)
+- [x] New v3 checks: bright palette, daytime atmosphere, landmark + arch (Blender meshes), shards (placement, gain, once per lap, lap reset), weekly events (stable/advance/end, Speed Week, Quest Bonus)
+- [x] 2-client local server: Player2 untouched while DevTest drove Player1
+- [x] Clean session: 10.4 min, 2 clients, 0 errors / 0 warnings
+- [x] Layouts: phone (iPhone 7), tablet (iPad 6th gen), desktop
+- [x] Performance: 1,195 map parts; live client ~241 FPS on this PC (Shift+F5). No real low-end device available (see report)
+- [x] Live v32: loads, bright map, shards + pad + gate work, all 8 purchases prompt (`tests/live_check_v32.md`)
