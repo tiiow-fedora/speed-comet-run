@@ -93,8 +93,8 @@ local function hintText(): string?
 	end
 	if n then
 		local req = Config.Stages[n].Req
-		if speed < req and speed < req * 0.25 and n > 1 then
-			return "Gate " .. n .. " needs ⚡" .. Format.short(req) .. ". Upgrade your Boots or Rebirth to get faster!"
+		if speed < req * 0.5 and n > 2 then
+			return "Gate " .. n .. " needs ⚡" .. Format.short(req) .. ". Tap ↩️ RESTART to farm Wins pads, then buy faster Boots!"
 		end
 	end
 	return nil

@@ -36,6 +36,7 @@ local equipBoot = remote("EquipBoot")
 local rebirth = remote("Rebirth")
 local claimDaily = remote("ClaimDaily")
 local tutorialDone = remote("TutorialDone")
+local restartLap = remote("RestartLap")
 remotes.Parent = ReplicatedStorage
 
 local function guarded(name: string, rate: number, fn: (Player, ...any) -> ())
@@ -54,6 +55,10 @@ buyBoot.OnServerEvent:Connect(guarded("BuyBoot", 3, Shop.buyBoot))
 equipBoot.OnServerEvent:Connect(guarded("EquipBoot", 3, Shop.equipBoot))
 rebirth.OnServerEvent:Connect(guarded("Rebirth", 1, Shop.rebirth))
 claimDaily.OnServerEvent:Connect(guarded("ClaimDaily", 1, Shop.claimDaily))
+restartLap.OnServerEvent:Connect(guarded("RestartLap", 0.5, function(player: Player)
+	Gameplay.resetLap(player)
+	Gameplay.teleport(player, layout.SpawnCFrame)
+end))
 tutorialDone.OnServerEvent:Connect(guarded("TutorialDone", 1, function(player: Player)
 	local p = DataService.get(player)
 	if p and not p.TutorialDone then

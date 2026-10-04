@@ -463,7 +463,7 @@ local function buildSide()
 		Name = "Side",
 		AnchorPoint = Vector2.new(0, 0.5),
 		Position = UDim2.new(0, 8, 0.5, -20),
-		Size = UDim2.fromOffset(84, 5 * 84),
+		Size = UDim2.fromOffset(84, 6 * 84),
 		BackgroundTransparency = 1,
 		Parent = root,
 	})
@@ -473,6 +473,7 @@ local function buildSide()
 		{ "Rebirth", "🔁", "REBIRTH", Theme.Pink },
 		{ "Store", "💎", "STORE", Theme.Gold },
 		{ "Daily", "🎁", "DAILY", Theme.Green },
+		{ "Restart", "↩️", "RESTART", Color3.fromRGB(120, 200, 255) },
 		{ "Invite", "👥", "INVITE", Color3.fromRGB(150, 120, 255) },
 	}
 	for i, d in defs do
@@ -501,7 +502,10 @@ local function buildSide()
 		Theme.corner(9).Parent = dot
 		sideButtons[d[1]] = b
 		b.Activated:Connect(function()
-			if d[1] == "Invite" then
+			if d[1] == "Restart" then
+				remotes.RestartLap:FireServer()
+				Hud.toast("Back to the start! Wins pads pay out again", Theme.Accent)
+			elseif d[1] == "Invite" then
 				local ok, can = pcall(SocialService.CanSendGameInviteAsync, SocialService, player)
 				if ok and can then
 					pcall(SocialService.PromptGameInvite, SocialService, player)
