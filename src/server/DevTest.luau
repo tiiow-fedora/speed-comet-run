@@ -130,6 +130,17 @@ function DevTest.run()
 	check("finish returns to spawn", hrp().Position.Z < 0, hrp().Position.Z)
 	check("lap reset", (Gameplay.runtime(player) :: any).checkpoint == 0)
 
+	-- 9b. daily reward: ready -> pays day-1 wins once; second claim is rejected
+	p.LastDaily = 0
+	p.DailyStreak = 0
+	Shop.refreshDaily(player)
+	check("daily ready attr", player:GetAttribute("DailyReady") == true)
+	local wd = p.Wins
+	Shop.claimDaily(player)
+	check("daily pays day 1", p.Wins == wd + Config.DailyWinsPerDay, p.Wins - wd)
+	Shop.claimDaily(player)
+	check("daily second claim rejected", p.Wins == wd + Config.DailyWinsPerDay and player:GetAttribute("DailyReady") == false)
+
 	-- 10. product handlers (direct) and receipt de-dupe
 	p.Speed = 100
 	Monetization.handlers.WinsS(player, p)
@@ -171,6 +182,7 @@ function DevTest.run()
 	end
 	Gameplay.resetLap(player)
 	State.sync(player)
+	Shop.refreshDaily(player)
 	Gameplay.applyWalkSpeed(player, p)
 	Gameplay.applyTrail(player)
 	tp(-20)

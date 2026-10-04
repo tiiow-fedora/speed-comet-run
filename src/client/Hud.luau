@@ -461,10 +461,13 @@ local function buildTop()
 end
 
 local function buildSide()
-	-- 2-column grid in the top-left so it never collides with the mobile thumbstick
+	-- 2-column grid on the left. Touch: near the top (chat is collapsed on mobile and the
+	-- thumbstick owns the bottom-left). Desktop: below the Roblox chat window, which
+	-- opens top-left and would otherwise cover these buttons and eat their clicks.
+	local touchFirst = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 	local side = new("Frame", {
 		Name = "Side",
-		Position = UDim2.fromOffset(8, 72),
+		Position = UDim2.fromOffset(8, if touchFirst then 72 else 236),
 		Size = UDim2.fromOffset(2 * 76 + 8, 3 * 80),
 		BackgroundTransparency = 1,
 		Parent = root,
