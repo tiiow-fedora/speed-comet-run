@@ -85,6 +85,7 @@ Config.Products = {
 Config.ProductOrder = { "SpeedBurst", "SkipStage", "Potion3x", "WinsS", "WinsL" }
 
 Config.PotionSeconds = 600
+Config.WelcomePotionSeconds = 120 -- free 3x boost on a player's very first join
 Config.PotionMult = 3
 Config.BurstSeconds = 300
 Config.BurstMin = 250

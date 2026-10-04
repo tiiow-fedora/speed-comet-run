@@ -42,6 +42,25 @@ function Gameplay.notify(player: Player, kind: string, text: string, extra: any?
 	notify:FireClient(player, kind, text, extra)
 end
 
+-- First-ever join (loaded profile, never played, never earned): free 3x potion.
+function Gameplay.welcomeIfNew(player: Player): boolean
+	local p = DataService.get(player)
+	if p and DataService.isLoaded(player) and p.PlaySeconds == 0 and p.TotalWins == 0 then
+		p.PotionLeft += Config.WelcomePotionSeconds
+		return true
+	end
+	return false
+end
+
+-- Server-wide toast for everyone except `except` (who gets their own message).
+function Gameplay.announce(text: string, except: Player?)
+	for p in runtime do
+		if p ~= except then
+			notify:FireClient(p, "announce", text)
+		end
+	end
+end
+
 function Gameplay.multiplier(player: Player, p: DataService.Profile): number
 	local boot = Config.Boots[p.Boot] or Config.Boots[1]
 	local m = boot.Mult * (1 + p.Rebirths)
@@ -183,6 +202,7 @@ local function claimPad(player: Player, p: DataService.Profile, rt: Runtime, st:
 	local final = st.Index == #layout.Stages
 	Gameplay.notify(player, "wins", "+" .. Format.commas(gained) .. " Wins!", { stage = st.Index, final = final })
 	if final then
+		Gameplay.announce(player.DisplayName .. " reached the FINISH! 🏁", player)
 		rt.finishing = true
 		task.delay(2.5, function()
 			if runtime[player] ~= rt then

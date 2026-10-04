@@ -88,10 +88,16 @@ local function onPlayerAdded(player: Player)
 		return
 	end
 	Passes.load(player)
+	local firstJoin = Gameplay.welcomeIfNew(player)
 	Gameplay.addPlayer(player)
 	State.sync(player)
 	Shop.refreshDaily(player)
 	player:SetAttribute("Loaded", true)
+	if firstJoin then
+		task.delay(3, function()
+			Gameplay.notify(player, "purchase", "Welcome gift: 3x Speed for 2 minutes!")
+		end)
+	end
 	player:SetAttribute("DataSaving", DataService.isLoaded(player))
 	player.CharacterAdded:Connect(function(character)
 		Gameplay.onCharacter(player, character)
@@ -129,11 +135,12 @@ if game:GetService("RunService"):IsStudio() then
 			-- wipe player N's profile in memory (Studio only) to replay the new-player flow
 			local player = Players:GetPlayers()[tonumber(arg) or 1]
 			DataService.resetForTest(player)
+			local welcomed = Gameplay.welcomeIfNew(player)
 			Gameplay.resetLap(player)
 			State.sync(player)
 			Shop.refreshDaily(player)
 			player:LoadCharacter()
-			return player.Name
+			return player.Name .. " welcomed=" .. tostring(welcomed) .. " potion=" .. tostring((DataService.get(player) :: any).PotionLeft)
 		end
 		if what == "tp" then
 			-- legit server teleport (sets anti-cheat grace) to just before gate `arg`

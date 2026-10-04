@@ -69,6 +69,7 @@ function Shop.rebirth(player: Player)
 	Gameplay.applyWalkSpeed(player, p)
 	Gameplay.resetLap(player)
 	Gameplay.teleport(player, Gameplay.layout().SpawnCFrame)
+	Gameplay.announce(player.DisplayName .. " just reached Rebirth " .. p.Rebirths .. "! 🔁", player)
 	Gameplay.notify(player, "rebirth", "Rebirth " .. p.Rebirths .. "! Speed gain is now x" .. (1 + p.Rebirths) .. " from rebirths")
 end
 

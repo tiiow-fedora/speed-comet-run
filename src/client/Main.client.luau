@@ -177,6 +177,8 @@ remotes.Notify.OnClientEvent:Connect(function(kind: string, text: string, extra:
 			task.spawn(faceCamera, player.Character)
 		end
 		Hud.toast(text, Theme.Accent)
+	elseif kind == "announce" then
+		Hud.toast(text, Theme.Accent)
 	elseif kind == "daily" then
 		Sfx.play("buy")
 		Hud.toast(text, Theme.Green)

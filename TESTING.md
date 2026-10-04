@@ -33,6 +33,12 @@ The automated part is `src/server/DevTest.luau`. It drives a real player through
 ## Multiplayer
 - [x] 2-client local server (Test → Server and Clients → Add Clients ×2): both players load independent profiles (Player1 107 Speed, Player2 62 Speed). DevTest driving Player1 left Player2 untouched (62 → 87 from normal ticks). 27/27 PASS. Log: `tests/devtest_2player_localserver.log`.
 
+## Post-report additions (01:05)
+- [x] Welcome gift: `DevRun('fresh',1)` → `FRESH Player1 welcomed=true potion=120` (3x Speed for 2 min on a player's first join).
+- [x] Server-wide announcements: with 2 clients, DevTest drove Player1 through the finish. Player2's screen showed "Player1 reached the FINISH! 🏁" (`tests/screens/announce_finish_player2.jpg`). DevTest 30/30, Player2 state untouched (Speed 171 from normal ticks).
+- [x] Side walls on floor segments (no accidental side falls). Gaps still kill. Run with W+Space stayed on the track.
+- [x] Music: `CometMusic` IsLoaded=true, IsPlaying=true, TimeLength=30. MUSIC toggle on the right column.
+
 ## Remote audit
 | Remote | Client sends | Server validation | Rate limit |
 |---|---|---|---|
