@@ -1,0 +1,9 @@
+Release v3 (A first 60 s + B bright map + C retention) Studio checklist, 2026-10-04
+1. DevTest, Play (desktop) 12:45:30 -> 58 pass, 0 fail; Play (iPhone 7 emulator) 12:48:54 -> 58 pass, 0 fail
+   new v3 checks: bright palette, daytime sky + atmosphere, comet landmark + spawn arch, landmark uses Blender meshes,
+   shards placed (>=15), shard gives speed, shard only once per lap, new lap bumps Lap attr, shard collectable after new lap,
+   event index stable within a week / advances weekly / ends next Monday, Speed Week multiplies gain, Quest Bonus doubles quest reward
+2. 2-client local server 12:50:22 -> 13:01:02: PLAYERS 2 Player1 1534 Player2 1400; DevTest on Player1 58/58; P2 AFTER 1415 0 nil (untouched)
+3. Clean session: 10.4 min with 2 clients: server Output only "[CometRun] server ready, 15 stages, track length 7602, map parts 1195" + test lines. 0 errors / 0 warnings.
+4. Layouts: phone iPhone 7 (run3/v3_phone_spawn.jpg), tablet iPad 1024x768 (run3/v3_tablet_ipad.jpg), desktop (run3/v3_desktop_spawn.jpg).
+5. Performance: map parts 1195 (v2: 1171; +24 shards, +landmark/arch meshes). Decor CanTouch/CanQuery off (DevTest).
