@@ -34,3 +34,15 @@ Note: Creator Hub showed an "Unrestricted Experience Access" warning on save —
 
 Works: core loop (15 stages, 6 zones, 8 boots), saving, HUD/shop/rebirth/store/daily, leaderboard, onboarding, mobile layout, 3 passes + 5 products, anti-exploit. DevTest 30/30. Live join verified for v16, v18, v20, v24.
 Blocked: reach limited to 16+/trusted friends until engagement threshold or publishing fee (user decision). Experience Detail Page thumbnail unconfirmed.
+
+
+# FOLLOW-UP RUN (started 2026-10-04 01:20)
+
+## Step 1 take stock
+**API key re-test (01:20, this run):** key valid. universe read 200 (PUBLIC, "+1 Speed Comet Run"), place read 200, game-pass read 200 (3 passes), dev-product read 200 (5 products), asset create / game-pass create / dev-product create with empty bodies → 400 validation (auth OK), thumbnail-personalization read 200. All capabilities needed for this run work.
+
+**Analytics (Creator Hub overview, 01:22):** 0 visits; D1 retention, new users, playtime, DAU, revenue all "--" ("No data for selected period"). Audience reach: "Ages 16+ and trusted friends". Too little data to mean anything; no conclusions drawn.
+
+**Backup:** `backup/last-known-good.rbxl` = rojo build of the source published as v24 (manifest in `backup/manifest.json`), git tag `live-v24`.
+
+**Skipped/unverified items carried over from run 1:** reach limited (needs fee/engagement); Experience Detail Page thumbnail unconfirmed; game-pass purchase flow untestable for the owner (owns all passes); friend boost + Invite + VIP chat tag untested; cross-server session lock untested; balance only simulated; meteor hazards (cut list) not built; thumbnails upscaled Studio captures; console disabled; owner/test-account saves hold test data.
