@@ -27,3 +27,10 @@ The first attempt (AgX tone mapping, grey sky, a box "trail" behind the runner t
 - Homepage thumbnails (Thumbnail Personalization API, 13:05): 3 uploaded, asset ids 80754079463507 / 116825158592566 / 128942246979952, moderation "Reviewing" at upload. New personalization config `8ff73fd5-ee5c-437d-8af6-bc79e21a3b10` created with these 3, replacing the run-1 set. Ids are in `assets/thumbnails/uploaded_ids.json`.
 - Icon: uploaded in Creator Hub → Places → Icon and saved; the page then shows the "pending moderation" placeholder (`tests/screens/run3/icon_upload_preview.jpg`, `icon_saved_pending.jpg`).
 - Title kept as "+1 Speed Comet Run" (accurate, uses the genre's search term). Description rewritten to list only features that exist in v32.
+
+## Experience Detail Page thumbnails (fixed 2026-10-04 ~13:15, after the owner reported the default "ROBLOX" placeholder)
+The homepage thumbnails (Thumbnail Personalization API) are a separate slot from the detail-page media, which was still empty (`games.roblox.com/v2/games/10769274719/media` → `{"data":[]}`). The Creator Hub uploader doesn't accept files from browser automation, and Studio's settings have no thumbnail section. So the files were sent from the logged-in Creator Hub page to the same endpoint its bundle uses (`publish.roblox.com/v1/games/{universeId}/thumbnail/image`, field `request.files`):
+- thumb_spawn_hero.png → 200, targetId 8459839164704349 → image 90887340723686, approved
+- thumb_mars_shards.png → 200, targetId 8442042170712504 → image 72736726042541, approved
+- thumb_aerial_track.png → **not uploaded**: the third upload was blocked by the session's permission guard. Add it by hand in Creator Hub → Thumbnails → Experience Detail Page if wanted.
+Right after upload the game page showed the "processing" placeholder instead of the Roblox logo (`tests/screens/run3/detail_page_processing.jpg`); the images appear once Roblox's CDN finishes rendering them.
