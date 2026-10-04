@@ -54,3 +54,13 @@ The automated part is `src/server/DevTest.luau`. It drives a real player through
 Live check (00:24): a client-side `Character:PivotTo` jump of ~890 studs from the command bar was caught: `[AntiCheat] tiiow moved 891 studs in 1.1s (allowed 267)`, and the character was rubber-banded back.
 
 Currency and progress never come from the client. Speed is ticked by the server. Wins are paid when the server sees your HumanoidRootPart inside a pad zone, and only if Speed ≥ that stage's requirement. Gate crossings are validated on the server (10 Hz). A 1-second-window horizontal speed check rubber-bands teleport/speed exploits (allowance = 2 × WalkSpeed + 40 studs/s).
+
+
+# V2 release (v30) checklist, follow-up run
+- [x] DevTest 44/44 (Play + phone emulator, 01:47; again with 2 clients, 02:00). Log: `tests/release_v2_checklist.log`
+- [x] 2-client local server: independent quests and state per player
+- [x] Clean session: 11.5 min with 2 clients + 10 min single client, 0 errors / 0 warnings
+- [x] Phone layout (iPhone 7): grid clear of thumbstick, Quests panel fits
+- [x] Save migration: v1-format sample save keeps all values, gains v2 defaults; wrong types rejected
+- [x] Live v30: loads, core loop, quests, all 5 products + 3 passes prompt (`tests/live_check_v30.md`)
+- New checks added for v2: part budget, JUMP signs, decor CanTouch, migration ×3, quests ×7, BestSpeed

@@ -21,3 +21,16 @@ Releases: **R1** = items 1–3, **R2** = items 4–5, **R3** = items 6–7. Each
 - **New Robux products or price changes** — no data to justify changes; existing items must not change for past buyers. Monetization tuning is limited to placement (none needed after review; see DECISIONS).
 - **Meteor hazards** (run-1 cut list) — adds frustration to a casual loop; lower value than quests/companions.
 - **Private servers / console support** — console needs gamepad UI selection work I can't test without a controller; private-server pricing is a business decision left to the owner.
+
+## Outcome (02:05)
+| # | Item | Status |
+|---|---|---|
+| 1 | Rough edges | **Published v30** (arrow marker, derived tutorial, HUD diffing). The product-icon issue fixed itself (CDN lag; icons show on v30). Pad glow root cause found, but the fix was **cut** (turn budget; see report). |
+| 2 | First 60 seconds | **Published v30** (intro fly-down, JUMP signs, jump hints) |
+| 3 | Performance basics | **Published v30** (CanTouch/CanQuery off on decor, part count 1,171 logged + DevTest budget check) |
+| 4 | Daily quests | **Published v30** (DevTest + 2-client + phone + live) |
+| 5 | Top Speed board | **Published v30** |
+| 6 | Companions | **Cut**: no turn budget left for another full release cycle (80-turn limit) |
+| 7 | Discoverability (thumbnails/description) | **Cut**: same reason; the description still only claims features that exist |
+
+R1 and R2 were merged into one release (v30) to fit the turn budget; see DECISIONS.md.

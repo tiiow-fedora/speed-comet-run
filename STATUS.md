@@ -46,3 +46,6 @@ Blocked: reach limited to 16+/trusted friends until engagement threshold or publ
 **Backup:** `backup/last-known-good.rbxl` = rojo build of the source published as v24 (manifest in `backup/manifest.json`), git tag `live-v24`.
 
 **Skipped/unverified items carried over from run 1:** reach limited (needs fee/engagement); Experience Detail Page thumbnail unconfirmed; game-pass purchase flow untestable for the owner (owns all passes); friend boost + Invite + VIP chat tag untested; cross-server session lock untested; balance only simulated; meteor hazards (cut list) not built; thumbnails upscaled Studio captures; console disabled; owner/test-account saves hold test data.
+
+## Follow-up status (final, 02:06)
+Live **v30** verified; backup = exact v30 bytes (tag live-v30). Done: PLAN_V2 items 1–5. Cut: 6–7 (turn budget). Blocked: nothing; reach limit still needs the owner's decision.
