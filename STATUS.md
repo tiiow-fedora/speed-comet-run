@@ -29,12 +29,8 @@ Note: Creator Hub showed an "Unrestricted Experience Access" warning on save —
 
 **All needed capabilities confirmed. Proceeding to Phase 1.**
 
-## Current phase (updated 2026-10-04 00:56)
-Phase 5 done → Phase 6 (report) + extra QA.
+## Current phase (final, 2026-10-04 01:13)
+**Done.** Live place version 24 is PUBLIC (https://www.roblox.com/games/111550268150564/). See MORNING_REPORT.md.
 
-- Published: place version 18 (Open Cloud). Experience is **PUBLIC**. Content maturity questionnaire done: label **Minimal**.
-- Creator Hub reach: a new experience is limited to "16+ users and trusted friends" until enough highly engaged players, or until a refundable publishing fee / 50,000 R$ expedited review is paid. Not paid (no spending allowed); see MORNING_REPORT.
-- Icon approved. 3 homepage thumbnails approved and active (Thumbnail Personalization API). Experience Detail Page thumbnail upload through Creator Hub could not be confirmed.
-- Genre: Simulation › Incremental Simulator. Max players 20. Description set.
-- DevTest 30/30. 10-minute clean session. Live client join + real purchase prompt (cancelled) verified.
-Blocked: nothing.
+Works: core loop (15 stages, 6 zones, 8 boots), saving, HUD/shop/rebirth/store/daily, leaderboard, onboarding, mobile layout, 3 passes + 5 products, anti-exploit. DevTest 30/30. Live join verified for v16, v18, v20, v24.
+Blocked: reach limited to 16+/trusted friends until engagement threshold or publishing fee (user decision). Experience Detail Page thumbnail unconfirmed.

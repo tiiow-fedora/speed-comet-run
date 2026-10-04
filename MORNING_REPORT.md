@@ -1,15 +1,15 @@
 # MORNING REPORT: +1 Speed Comet Run
 
-**Live game:** https://www.roblox.com/games/111550268150564/ (universe 10769274719, place version 20, visibility **Public**)
+**Live game:** https://www.roblox.com/games/111550268150564/ (universe 10769274719, place version 24, visibility **Public**)
 **Repo:** `C:\Users\user\3D Objects\roblox-game` (git, 20+ commits; `.env` stays one folder up and is not in the repo)
-**Run time:** started 2026-10-03 ~23:10; all phases done by ~01:00. Remaining time went to extra QA and polish (see the end).
+**Run time:** started 2026-10-03 ~23:10; all phases done by ~01:00; post-report additions until ~01:12 (welcome gift, server announcements, Galaxy 2). Each one was tested in Studio (DevTest 30/30) and checked live before this report was finalized.
 
 ## What was built
 A "+1 Speed" incremental runner with an original low-gravity space theme. Research picked this genre because it's the only finishable-in-one-night concept with top-chart evidence: "+1 Speed Keyboard Escape" had 88.6K concurrent players and a 97% like ratio on 2026-10-03 (`RESEARCH.md`).
 
-- **Loop:** Speed +1 every second (×multipliers) → energy gates need ⚡25 … ⚡100,000 → Wins pads behind each gate → spend Wins on 6 boots (x1–x32) → finish pad gives a big bonus and starts a new lap → rebirth for +1x permanent. RESTART button re-runs early pads to farm Wins.
-- **World:** 10 stages over 5 zones (Moon, Mars, Ice Planet, Nebula, Star Core). Generated in code at server start (`src/server/MapBuilder.luau`), with Gravity 80 for floaty jumps over crater gaps, Blender-made rocks/crystals, background planets and a starfield.
-- **Systems:** DataStore saving (retries, UpdateAsync, session lock, autosave, BindToClose), HUD with next-gate progress bar, Boots/Rebirth/Store/Daily panels, daily streak reward, friend boost (+10% per friend, max 30%), invite button, global Top Runners board (OrderedDataStore), slow-mode toggle, music toggle, onboarding hints + guide beam, mobile layout.
+- **Loop:** Speed +1 every second (×multipliers) → energy gates need ⚡25 … ⚡100,000 → Wins pads behind each gate → spend Wins on 8 boots (x1–x128) → finish pad gives a big bonus and starts a new lap → rebirth for +1x permanent. RESTART button re-runs early pads to farm Wins.
+- **World:** 15 stages over 6 zones (Moon, Mars, Ice Planet, Nebula, Star Core, and "Galaxy 2": Event Horizon). Generated in code at server start (`src/server/MapBuilder.luau`), with Gravity 80 for floaty jumps over crater gaps, Blender-made rocks/crystals, background planets and a starfield.
+- **Systems:** welcome gift (3x Speed for 2 min on first join), server-wide toasts on finish/rebirth, DataStore saving (retries, UpdateAsync, session lock, autosave, BindToClose), HUD with next-gate progress bar, Boots/Rebirth/Store/Daily panels, daily streak reward, friend boost (+10% per friend, max 30%), invite button, global Top Runners board (OrderedDataStore), slow-mode toggle, music toggle, onboarding hints + guide beam, mobile layout.
 - **Monetization (`MONETIZATION.md`):** 3 passes (2x Speed 149, 2x Wins 199, VIP 99) and 5 products (Speed Burst 25, Skip Stage 29, 3x Potion 39, 750 Wins 49, 5,000 Wins 149). All were created through Open Cloud with generated icons. **No paid randomness anywhere.** `ProcessReceipt` stores the PurchaseId and saves before returning PurchaseGranted, and rolls back on save failure.
 - **Assets (`ASSETS.md`):** all original. 4 Blender meshes, 6 synthesized SFX and a synthesized music loop (Python math, no samples), a Blender icon, PIL pass icons, and Studio-screenshot thumbnails. No Creator Store assets.
 - **Experience settings:** name, description, genre (Simulation › Incremental Simulator), max players 20, icon, 3 homepage thumbnails (personalization on), maturity questionnaire → **Minimal**, access age All Ages.
@@ -34,7 +34,7 @@ A "+1 Speed" incremental runner with an original low-gravity space theme. Resear
 3. **Game-pass purchase flow** was not testable: your account owns its own passes (the creator always does), so `PromptGamePassPurchaseFinished` has only been code-reviewed. Pass *effects* were verified (gain = 1 × 2 × 1.25 = 2.5/s).
 4. **Friend boost and Invite button** are untested: Studio test accounts aren't friends, and invites don't work in Studio. The VIP chat tag is untested with a second player.
 5. **Session lock across two real servers** is untested (needs two live servers). BindToClose saving was only tested by stopping Studio.
-6. **Balance** comes from `tools/balance_sim.py` (stage 4 at ~5 min, finish at ~72 min free), not real players.
+6. **Balance** comes from `tools/balance_sim.py` (stage 4 at ~5 min, stage 10 at ~59 min, stage 11 at ~82 min free; stages 13–15 are multi-hour goals), not real players. Galaxy 2 visuals were only checked from a fly-by camera, since the anti-cheat correctly blocks teleporting a low-Speed character there.
 7. **Cut from the design:** meteor hazards. Everything else on the cut list was built.
 8. **Thumbnails** are Studio captures (1112×626) upscaled to 1920×1080, so they're slightly soft.
 9. **Music** asset was still "Reviewing" at 00:58. If moderation rejects it, the game simply plays no music (no errors). The SFX are approved.
@@ -49,8 +49,9 @@ A "+1 Speed" incremental runner with an original low-gravity space theme. Resear
 5. **Optional:** enable paid private servers (Creator Hub → Access settings) for extra revenue and co-play; I left them off. The Rojo Studio plugin has an update (7.7.1).
 
 ## Next 5 changes most likely to improve retention and revenue (ranked)
-1. **More content after the finish.** A second galaxy (stages 11–20) unlocked at Rebirth 3, plus higher boots. The sub-genre's leaders keep adding worlds ("Galaxy 2" in Keyboard Escape), and the 28-day retention signal rewards having somewhere to go.
-2. **Pets/companions bought with Wins (fixed price, no eggs)** that add multipliers and show off. Collection plus visible status is the strongest retention driver in the genre. Keep it non-random to stay out of paid-random-item rules.
-3. **Time-limited events** (weekend 2x Wins, a rotating "comet shower" stage with an exclusive trail). This gives a reason to return on D2–D7 and a natural spot for a limited pass.
-4. **Better first session.** Add a short scripted intro where the camera flies down the track, start-pad treadmills so Speed visibly climbs, and a free 2-minute 2x potion on first join so gate 2 opens in about a minute. Then measure D1 in Creator Analytics and tune `Config.Stages`.
-5. **Social pressure:** server-wide "X just reached Star Core!" announcements, a Speed leaderboard alongside Wins, and a gifted-pass flow (buy 2x Speed for a friend). This raises co-play (an explicit discovery signal) and adds a second purchase path.
+(Galaxy 2, the welcome gift and server announcements were added after the first draft of this list. These are what's left.)
+1. **Pets/companions bought with Wins (fixed price, no eggs)** that add multipliers and follow the player. Collection plus visible status is the strongest retention driver in the genre. Keeping it non-random stays clear of paid-random-item rules.
+2. **Time-limited events** (weekend 2x Wins, a rotating "comet shower" stage with an exclusive trail). This gives a reason to return on D2–D7, which the 28-day discovery signal rewards, and a natural slot for a limited pass.
+3. **Better first 60 seconds:** a 3-second camera fly-down of the track on first join, treadmills on the spawn pad so Speed visibly climbs while you stand still, and a clearer first gap (arrow decal "JUMP!"). Then measure D1 in Creator Analytics and tune `Config.Stages` (all balance lives there).
+4. **Gift passes + Speed leaderboard:** let players buy 2x Speed for a friend in the server, and add a second board for highest Speed. Co-play is an explicit discovery signal, and gifting adds a second purchase path.
+5. **Paid private servers + console support:** enable private servers (cheap, e.g. 50 R$/month) for groups of friends, and make the side buttons gamepad-selectable so Console can be turned on in Access settings.
