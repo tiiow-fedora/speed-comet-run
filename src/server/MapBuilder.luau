@@ -379,7 +379,7 @@ local function lighting()
 	Lighting.Brightness = 2.2
 	Lighting.Ambient = Color3.fromRGB(140, 130, 175)
 	Lighting.OutdoorAmbient = Color3.fromRGB(165, 155, 200)
-	Lighting.ExposureCompensation = 0.1
+	Lighting.ExposureCompensation = -0.3
 	Lighting.EnvironmentDiffuseScale = 0.6
 	Lighting.EnvironmentSpecularScale = 0.4
 	Lighting.FogEnd = 100000
@@ -393,21 +393,21 @@ local function lighting()
 	sky.CelestialBodiesShown = true
 	sky.Parent = Lighting
 	local atm = Instance.new("Atmosphere")
-	atm.Density = 0.32
+	atm.Density = 0.24
 	atm.Offset = 0.15
-	atm.Color = Color3.fromRGB(190, 160, 255)
+	atm.Color = Color3.fromRGB(150, 110, 255)
 	atm.Decay = Color3.fromRGB(255, 150, 210)
-	atm.Glare = 0.25
-	atm.Haze = 1.2
+	atm.Glare = 0
+	atm.Haze = 0.35
 	atm.Parent = Lighting
 	local bloom = Instance.new("BloomEffect")
-	bloom.Intensity = 0.5
+	bloom.Intensity = 0.25
 	bloom.Size = 24
-	bloom.Threshold = 1.8
+	bloom.Threshold = 2.6
 	bloom.Parent = Lighting
 	local cc = Instance.new("ColorCorrectionEffect")
-	cc.Saturation = 0.25
-	cc.Contrast = 0.08
+	cc.Saturation = 0.35
+	cc.Contrast = 0.18
 	cc.TintColor = Color3.fromRGB(255, 246, 255)
 	cc.Parent = Lighting
 end
@@ -430,7 +430,7 @@ local function cometLandmark(parent: Instance)
 	local m = Instance.new("Model")
 	m.Name = "CometLandmark"
 	m.Parent = parent
-	local headPos = Vector3.new(0, Y + 85, 400)
+	local headPos = Vector3.new(0, Y + 70, 340)
 	local headT = templateOf("CometHead")
 	local head: BasePart
 	if headT then
@@ -441,9 +441,9 @@ local function cometLandmark(parent: Instance)
 		head = ball
 	end
 	head.Name = "Head"
-	head.Size = head.Size * (34 / math.max(head.Size.X, head.Size.Y, head.Size.Z))
+	head.Size = head.Size * (56 / math.max(head.Size.X, head.Size.Y, head.Size.Z))
 	head.CFrame = CFrame.new(headPos)
-	head.Color = Color3.fromRGB(230, 255, 255)
+	head.Color = Color3.fromRGB(255, 190, 110) -- warm, so it pops against the blue sky
 	head.Material = Enum.Material.Neon
 	decorPart(head)
 	head.Parent = m
@@ -451,10 +451,10 @@ local function cometLandmark(parent: Instance)
 	if tailT then
 		local tail = tailT:Clone()
 		tail.Name = "Tail"
-		tail.Size = tail.Size * (120 / math.max(tail.Size.X, tail.Size.Y, tail.Size.Z))
+		tail.Size = tail.Size * (170 / math.max(tail.Size.X, tail.Size.Y, tail.Size.Z))
 		local dir = Vector3.new(0, 0.42, 1).Unit -- the tail streams up and away from the spawn
-		tail.CFrame = CFrame.fromMatrix(headPos + dir * 62, Vector3.xAxis, dir)
-		tail.Color = Color3.fromRGB(110, 230, 255)
+		tail.CFrame = CFrame.fromMatrix(headPos + dir * 88, Vector3.xAxis, dir)
+		tail.Color = Color3.fromRGB(255, 120, 180)
 		tail.Material = Enum.Material.Neon
 		tail.Transparency = 0.25
 		decorPart(tail)

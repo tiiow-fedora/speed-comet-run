@@ -24,7 +24,7 @@ end
 export type Zone = { Name: string, Floor: Color3, Accent: Color3, Rock: Color3, Material: Enum.Material }
 Config.Zones = {
 	-- v3 "bright cosmos" palette: cool saturated grounds, warm interactive objects (gold pads, red/green gates)
-	{ Name = "Moon", Floor = Color3.fromRGB(110, 160, 255), Accent = Color3.fromRGB(130, 255, 255), Rock = Color3.fromRGB(70, 95, 210), Material = Enum.Material.SmoothPlastic },
+	{ Name = "Moon", Floor = Color3.fromRGB(230, 220, 255), Accent = Color3.fromRGB(80, 230, 255), Rock = Color3.fromRGB(120, 90, 220), Material = Enum.Material.SmoothPlastic },
 	{ Name = "Mars", Floor = Color3.fromRGB(255, 115, 80), Accent = Color3.fromRGB(255, 215, 90), Rock = Color3.fromRGB(200, 60, 55), Material = Enum.Material.Sand },
 	{ Name = "Ice Planet", Floor = Color3.fromRGB(175, 235, 255), Accent = Color3.fromRGB(60, 170, 255), Rock = Color3.fromRGB(110, 190, 255), Material = Enum.Material.Glacier },
 	{ Name = "Nebula", Floor = Color3.fromRGB(185, 110, 255), Accent = Color3.fromRGB(255, 110, 230), Rock = Color3.fromRGB(120, 60, 210), Material = Enum.Material.SmoothPlastic },

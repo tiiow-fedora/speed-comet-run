@@ -254,7 +254,13 @@ function DevTest.run()
 	check("shards placed in first stages", #layout.Shards >= 15, #layout.Shards)
 	Gameplay.resetLap(player)
 	local lap0 = (player:GetAttribute("Lap") :: number?) or 0
-	local sh = layout.Shards[3]
+	local sh = layout.Shards[1]
+	for _, cand in layout.Shards do
+		if math.abs(cand.Pos.X) < 0.5 and cand.Pos.Z > 60 then -- the test teleport puts the player at X = 0
+			sh = cand
+			break
+		end
+	end
 	p.Speed = 100
 	local expectShard = math.floor(math.max(Config.ShardMin, Gameplay.multiplier(player, p) * Config.ShardSeconds))
 	tp(sh.Pos.Z, sh.Pos.Y)
