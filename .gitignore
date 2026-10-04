@@ -8,3 +8,5 @@ blender/out/
 *.exe
 audio/out/
 art/out/
+
+!backup/*.rbxl
