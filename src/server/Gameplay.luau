@@ -25,6 +25,7 @@ type Runtime = {
 	sampleT: number,
 	finishing: boolean,
 	slow: boolean,
+	shards: { [string]: boolean },
 }
 
 local layout: MapBuilder.Layout
@@ -78,11 +79,12 @@ function Gameplay.multiplier(player: Player, p: DataService.Profile): number
 	if rt then
 		m *= 1 + math.min(rt.friends * Config.FriendBoostPer, Config.FriendBoostMax)
 	end
+	m *= Config.CurrentEvent().SpeedMult
 	return m
 end
 
 function Gameplay.winsMultiplier(player: Player): number
-	return if Passes.has(player, "Wins2x") then 2 else 1
+	return (if Passes.has(player, "Wins2x") then 2 else 1) * Config.CurrentEvent().WinsMult
 end
 
 local function hrpOf(player: Player): BasePart?
@@ -193,7 +195,7 @@ local function claimPad(player: Player, p: DataService.Profile, rt: Runtime, st:
 	rt.claimed[st.Index] = true
 	rt.checkpoint = st.Index
 	player:SetAttribute("Checkpoint", st.Index)
-	local gained = st.Wins * Gameplay.winsMultiplier(player)
+	local gained = math.floor(st.Wins * Gameplay.winsMultiplier(player))
 	p.Wins += gained
 	p.TotalWins += gained
 	if st.Index > p.BestStage then
@@ -213,10 +215,8 @@ local function claimPad(player: Player, p: DataService.Profile, rt: Runtime, st:
 			if runtime[player] ~= rt then
 				return
 			end
-			table.clear(rt.claimed)
-			rt.checkpoint = 0
+			Gameplay.resetLap(player)
 			rt.finishing = false
-			player:SetAttribute("Checkpoint", 0)
 			Gameplay.teleport(player, layout.SpawnCFrame)
 			Gameplay.notify(player, "lap", "Lap complete! Run it again for more Wins")
 		end)
@@ -270,6 +270,18 @@ local function checkPlayer(player: Player, rt: Runtime, p: DataService.Profile)
 	if rt.finishing then
 		return
 	end
+	-- Comet Shards: +Speed once per lap each (server decides by position)
+	if pos.Z < 1400 then
+		for _, sh in layout.Shards do
+			if not rt.shards[sh.Id] and (pos - sh.Pos).Magnitude < 6 then
+				rt.shards[sh.Id] = true
+				local amount = math.floor(math.max(Config.ShardMin, Gameplay.multiplier(player, p) * Config.ShardSeconds) * Config.CurrentEvent().ShardMult)
+				p.Speed += amount
+				State.syncSpeed(player, p)
+				Gameplay.notify(player, "shard", "+" .. Format.short(amount) .. " ⚡", { id = sh.Id })
+			end
+		end
+	end
 	for _, st in layout.Stages do
 		if not rt.claimed[st.Index] then
 			local dz = pos.Z - st.PadZ
@@ -310,6 +322,7 @@ function Gameplay.addPlayer(player: Player)
 		sampleT = 0,
 		finishing = false,
 		slow = false,
+		shards = {},
 	}
 	player:SetAttribute("Checkpoint", 0)
 	refreshFriends()
@@ -334,8 +347,10 @@ function Gameplay.resetLap(player: Player)
 	local rt = runtime[player]
 	if rt then
 		table.clear(rt.claimed)
+		table.clear(rt.shards)
 		rt.checkpoint = 0
 		player:SetAttribute("Checkpoint", 0)
+		player:SetAttribute("Lap", ((player:GetAttribute("Lap") :: number?) or 0) + 1) -- client re-shows shards
 	end
 end
 

@@ -21,7 +21,7 @@ export type StageLayout = {
 	Req: number,
 	Wins: number,
 }
-export type Layout = { Stages: { StageLayout }, SpawnCFrame: CFrame, EndZ: number, PartCount: number? }
+export type Layout = { Stages: { StageLayout }, SpawnCFrame: CFrame, EndZ: number, PartCount: number?, Shards: { { Id: string, Pos: Vector3 } } }
 
 local Y = Config.TrackY
 local W = Config.TrackWidth
@@ -283,14 +283,14 @@ local function pad(z: number, stageIndex: number, wins: number, zone: Config.Zon
 	att.Parent = p
 	local pe = Instance.new("ParticleEmitter")
 	pe.Texture = "rbxasset://textures/particles/sparkles_main.dds"
-	pe.Rate = 12
-	pe.Lifetime = NumberRange.new(1, 1.6)
-	pe.Speed = NumberRange.new(4, 8)
+	pe.Rate = 5 -- v3: was rate 12 / speed 4-8 / size 0.8 / LightEmission 1, which made a big glow cone with bloom
+	pe.Lifetime = NumberRange.new(0.8, 1.2)
+	pe.Speed = NumberRange.new(2, 4)
 	pe.SpreadAngle = Vector2.new(25, 25)
 	pe.EmissionDirection = Enum.NormalId.Right -- cylinder axis is X, rotated to point up
 	pe.Color = ColorSequence.new(Color3.fromRGB(255, 230, 90))
-	pe.Size = NumberSequence.new(0.8, 0)
-	pe.LightEmission = 1
+	pe.Size = NumberSequence.new(0.4, 0)
+	pe.LightEmission = 0.3
 	pe.Parent = att
 	if final then
 		-- finish arch
@@ -374,13 +374,14 @@ local function planet(pos: Vector3, radius: number, color: Color3, ringColor: Co
 end
 
 local function lighting()
-	Lighting.ClockTime = 0
-	Lighting.Brightness = 2
-	Lighting.Ambient = Color3.fromRGB(150, 145, 190)
-	Lighting.OutdoorAmbient = Color3.fromRGB(170, 165, 210)
-	Lighting.ExposureCompensation = 0.4
-	Lighting.EnvironmentDiffuseScale = 0.5
-	Lighting.EnvironmentSpecularScale = 0.5
+	-- v3: bright daytime "pastel cosmos" look instead of a black night sky
+	Lighting.ClockTime = 14.5
+	Lighting.Brightness = 2.2
+	Lighting.Ambient = Color3.fromRGB(140, 130, 175)
+	Lighting.OutdoorAmbient = Color3.fromRGB(165, 155, 200)
+	Lighting.ExposureCompensation = 0.1
+	Lighting.EnvironmentDiffuseScale = 0.6
+	Lighting.EnvironmentSpecularScale = 0.4
 	Lighting.FogEnd = 100000
 	for _, c in Lighting:GetChildren() do
 		if c:IsA("Sky") or c:IsA("Atmosphere") or c:IsA("BloomEffect") or c:IsA("ColorCorrectionEffect") then
@@ -388,18 +389,132 @@ local function lighting()
 		end
 	end
 	local sky = Instance.new("Sky")
-	sky.StarCount = 5000
-	sky.CelestialBodiesShown = false
+	sky.StarCount = 3000
+	sky.CelestialBodiesShown = true
 	sky.Parent = Lighting
+	local atm = Instance.new("Atmosphere")
+	atm.Density = 0.32
+	atm.Offset = 0.15
+	atm.Color = Color3.fromRGB(190, 160, 255)
+	atm.Decay = Color3.fromRGB(255, 150, 210)
+	atm.Glare = 0.25
+	atm.Haze = 1.2
+	atm.Parent = Lighting
 	local bloom = Instance.new("BloomEffect")
-	bloom.Intensity = 0.6
-	bloom.Size = 30
-	bloom.Threshold = 1.6
+	bloom.Intensity = 0.5
+	bloom.Size = 24
+	bloom.Threshold = 1.8
 	bloom.Parent = Lighting
 	local cc = Instance.new("ColorCorrectionEffect")
-	cc.Saturation = 0.15
-	cc.Contrast = 0.05
+	cc.Saturation = 0.25
+	cc.Contrast = 0.08
+	cc.TintColor = Color3.fromRGB(255, 246, 255)
 	cc.Parent = Lighting
+end
+
+local function templateOf(name: string): BasePart?
+	local lib = propsFolder()
+	return lib and lib:FindFirstChild(name) :: BasePart?
+end
+
+local function decorPart(bp: BasePart)
+	bp.Anchored = true
+	bp.CanCollide = false
+	bp.CanTouch = false
+	bp.CanQuery = false
+	bp.CastShadow = false
+end
+
+-- Big comet landmark ahead of the spawn: the first thing a new player sees.
+local function cometLandmark(parent: Instance)
+	local m = Instance.new("Model")
+	m.Name = "CometLandmark"
+	m.Parent = parent
+	local headPos = Vector3.new(0, Y + 85, 400)
+	local headT = templateOf("CometHead")
+	local head: BasePart
+	if headT then
+		head = headT:Clone()
+	else
+		local ball = Instance.new("Part")
+		ball.Shape = Enum.PartType.Ball
+		head = ball
+	end
+	head.Name = "Head"
+	head.Size = head.Size * (34 / math.max(head.Size.X, head.Size.Y, head.Size.Z))
+	head.CFrame = CFrame.new(headPos)
+	head.Color = Color3.fromRGB(230, 255, 255)
+	head.Material = Enum.Material.Neon
+	decorPart(head)
+	head.Parent = m
+	local tailT = templateOf("CometTail")
+	if tailT then
+		local tail = tailT:Clone()
+		tail.Name = "Tail"
+		tail.Size = tail.Size * (120 / math.max(tail.Size.X, tail.Size.Y, tail.Size.Z))
+		local dir = Vector3.new(0, 0.42, 1).Unit -- the tail streams up and away from the spawn
+		tail.CFrame = CFrame.fromMatrix(headPos + dir * 62, Vector3.xAxis, dir)
+		tail.Color = Color3.fromRGB(110, 230, 255)
+		tail.Material = Enum.Material.Neon
+		tail.Transparency = 0.25
+		decorPart(tail)
+		tail.Parent = m
+	end
+	local att = Instance.new("Attachment")
+	att.Parent = head
+	local pe = Instance.new("ParticleEmitter")
+	pe.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	pe.Rate = 10
+	pe.Lifetime = NumberRange.new(2, 3)
+	pe.Speed = NumberRange.new(6, 12)
+	pe.SpreadAngle = Vector2.new(180, 180)
+	pe.Size = NumberSequence.new(1.6, 0)
+	pe.LightEmission = 0.5
+	pe.Color = ColorSequence.new(Color3.fromRGB(200, 255, 255))
+	pe.Parent = att
+end
+
+local function spawnArch(parent: Instance)
+	local t = templateOf("SpawnArch")
+	local arch: BasePart
+	if t then
+		arch = t:Clone()
+		arch.Size = arch.Size * ((W + 12) / arch.Size.X)
+		arch.CFrame = CFrame.new(0, Y + arch.Size.Y / 2 - 1, 22)
+	else
+		arch = Instance.new("Part")
+		arch.Size = Vector3.new(W + 12, 3, 3)
+		arch.CFrame = CFrame.new(0, Y + 24, 22)
+	end
+	arch.Name = "SpawnArch"
+	arch.Color = Color3.fromRGB(130, 255, 255)
+	arch.Material = Enum.Material.Neon
+	decorPart(arch)
+	arch.Parent = parent
+end
+
+-- Comet Shard pickups (v3): small glowing crystals in a zig-zag along the floor.
+local function shardsAlong(z0: number, z1: number, stageIndex: number, layout: Layout, parent: Instance)
+	local k = 0
+	local z = z0 + 12
+	while z < z1 - 8 do
+		k += 1
+		local pos = Vector3.new(((k % 3) - 1) * 9, Y + 3, z)
+		local shard = part({
+			Name = "Shard",
+			Size = Vector3.new(2, 2, 2),
+			CFrame = CFrame.new(pos) * CFrame.Angles(math.rad(45), 0, math.rad(45)),
+			Color = Color3.fromRGB(120, 255, 240),
+			Material = Enum.Material.Neon,
+			CanCollide = false,
+			CastShadow = false,
+		}, parent)
+		local id = stageIndex .. "_" .. (#layout.Shards + 1)
+		shard:SetAttribute("Id", id)
+		CollectionService:AddTag(shard, "Shard")
+		table.insert(layout.Shards, { Id = id, Pos = pos })
+		z += Config.ShardSpacing
+	end
 end
 
 function MapBuilder.build(): Layout
@@ -455,9 +570,11 @@ function MapBuilder.build(): Layout
 	end
 	spawn.Parent = track
 	zoneSign(10, zone1, deco)
+	spawnArch(deco)
+	cometLandmark(deco)
 
 	local T = 2 * math.sqrt(2 * Config.Gravity * Config.JumpHeight) / Config.Gravity
-	local layout: Layout = { Stages = {}, SpawnCFrame = CFrame.lookAt(Vector3.new(0, Y + 4, -20), Vector3.new(0, Y + 4, 100)), EndZ = 0 }
+	local layout: Layout = { Shards = {}, Stages = {}, SpawnCFrame = CFrame.lookAt(Vector3.new(0, Y + 4, -20), Vector3.new(0, Y + 4, 100)), EndZ = 0 }
 	local z = 40
 	local lastZone = 1
 	for i, st in Config.Stages do
@@ -468,9 +585,13 @@ function MapBuilder.build(): Layout
 		end
 		local stageStart = z
 		local prevReq = if i > 1 then Config.Stages[i - 1].Req else 0
-		local gap = math.clamp(Config.WalkSpeedFor(prevReq) * T * 0.5, 8, 45)
+		-- stage 1 gaps are tiny so holding jump can't drop a brand-new player; later gaps scale with speed
+		local gap = if i == 1 then 6 else math.clamp(Config.WalkSpeedFor(prevReq) * T * 0.5, 8, 45)
 		local segA = 60 + 8 * i
 		floor(z, z + segA, zone, track)
+		if i <= Config.ShardStages then
+			shardsAlong(z, z + segA, i, layout, deco)
+		end
 		z += segA
 		if i <= 2 then
 			-- painted "JUMP!" arrow on the floor right before the first crater gap
@@ -509,6 +630,9 @@ function MapBuilder.build(): Layout
 		z += gap
 		local segB = 70 + 10 * i
 		floor(z, z + segB, zone, track)
+		if i <= Config.ShardStages then
+			shardsAlong(z, z + segB - 20, i, layout, deco)
+		end
 		z += segB
 		local gateZ = z - 6
 		gate(gateZ, i, st.Req, zone, track)

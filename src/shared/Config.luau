@@ -23,12 +23,13 @@ end
 
 export type Zone = { Name: string, Floor: Color3, Accent: Color3, Rock: Color3, Material: Enum.Material }
 Config.Zones = {
-	{ Name = "Moon", Floor = Color3.fromRGB(150, 152, 165), Accent = Color3.fromRGB(80, 220, 255), Rock = Color3.fromRGB(105, 108, 122), Material = Enum.Material.Slate },
-	{ Name = "Mars", Floor = Color3.fromRGB(196, 98, 58), Accent = Color3.fromRGB(255, 160, 60), Rock = Color3.fromRGB(140, 62, 40), Material = Enum.Material.Sand },
-	{ Name = "Ice Planet", Floor = Color3.fromRGB(200, 230, 255), Accent = Color3.fromRGB(120, 200, 255), Rock = Color3.fromRGB(150, 190, 230), Material = Enum.Material.Glacier },
-	{ Name = "Nebula", Floor = Color3.fromRGB(95, 60, 150), Accent = Color3.fromRGB(255, 90, 230), Rock = Color3.fromRGB(70, 40, 120), Material = Enum.Material.SmoothPlastic },
-	{ Name = "Star Core", Floor = Color3.fromRGB(240, 200, 90), Accent = Color3.fromRGB(255, 255, 200), Rock = Color3.fromRGB(200, 140, 50), Material = Enum.Material.Marble },
-	{ Name = "Event Horizon", Floor = Color3.fromRGB(120, 95, 165), Accent = Color3.fromRGB(255, 140, 40), Rock = Color3.fromRGB(70, 55, 100), Material = Enum.Material.Slate },
+	-- v3 "bright cosmos" palette: cool saturated grounds, warm interactive objects (gold pads, red/green gates)
+	{ Name = "Moon", Floor = Color3.fromRGB(110, 160, 255), Accent = Color3.fromRGB(130, 255, 255), Rock = Color3.fromRGB(70, 95, 210), Material = Enum.Material.SmoothPlastic },
+	{ Name = "Mars", Floor = Color3.fromRGB(255, 115, 80), Accent = Color3.fromRGB(255, 215, 90), Rock = Color3.fromRGB(200, 60, 55), Material = Enum.Material.Sand },
+	{ Name = "Ice Planet", Floor = Color3.fromRGB(175, 235, 255), Accent = Color3.fromRGB(60, 170, 255), Rock = Color3.fromRGB(110, 190, 255), Material = Enum.Material.Glacier },
+	{ Name = "Nebula", Floor = Color3.fromRGB(185, 110, 255), Accent = Color3.fromRGB(255, 110, 230), Rock = Color3.fromRGB(120, 60, 210), Material = Enum.Material.SmoothPlastic },
+	{ Name = "Star Core", Floor = Color3.fromRGB(255, 200, 80), Accent = Color3.fromRGB(255, 90, 60), Rock = Color3.fromRGB(255, 140, 40), Material = Enum.Material.Marble },
+	{ Name = "Event Horizon", Floor = Color3.fromRGB(150, 120, 255), Accent = Color3.fromRGB(255, 150, 60), Rock = Color3.fromRGB(90, 60, 190), Material = Enum.Material.SmoothPlastic },
 } :: { Zone }
 
 export type Stage = { Req: number, Wins: number, Zone: number }
@@ -80,6 +81,40 @@ Config.QuestPool = {
 	{ Id = "pads80", Text = "Step on 80 Wins pads", Event = "pad", Target = 80, Mult = 8, Tier = 3 },
 } :: { QuestDef }
 Config.QuestMinBase = 25
+
+-- Comet Shards (v3): pickups along stages 1-3, once per lap, +Speed = max(ShardMin, gain x ShardSeconds)
+Config.ShardStages = 3
+Config.ShardSpacing = 18
+Config.ShardMin = 5
+Config.ShardSeconds = 3
+
+-- Weekly rotation (v3): one event per UTC week (weeks start Monday 00:00 UTC); cycles with no new build.
+export type WeeklyEvent = { Name: string, Desc: string, SpeedMult: number, WinsMult: number, ShardMult: number, QuestMult: number }
+Config.WeeklyEvents = {
+	{ Name = "Comet Shower", Desc = "Comet Shards give 3x Speed", SpeedMult = 1, WinsMult = 1, ShardMult = 3, QuestMult = 1 },
+	{ Name = "Wins Rush", Desc = "+50% Wins from pads", SpeedMult = 1, WinsMult = 1.5, ShardMult = 1, QuestMult = 1 },
+	{ Name = "Quest Bonus", Desc = "Quest rewards x2", SpeedMult = 1, WinsMult = 1, ShardMult = 1, QuestMult = 2 },
+	{ Name = "Speed Week", Desc = "+25% Speed gain", SpeedMult = 1.25, WinsMult = 1, ShardMult = 1, QuestMult = 1 },
+} :: { WeeklyEvent }
+
+function Config.WeekIndex(t: number): number
+	return (t + 3 * 86400) // 604800 -- the Unix epoch was a Thursday; shift so weeks start on Monday
+end
+
+function Config.EventIndexAt(t: number): number
+	return Config.WeekIndex(t) % #Config.WeeklyEvents + 1
+end
+
+-- Current event; Studio tests can force one with the ReplicatedStorage attribute ForceEvent.
+function Config.CurrentEvent(): WeeklyEvent
+	local forced = game:GetService("ReplicatedStorage"):GetAttribute("ForceEvent")
+	local idx = if typeof(forced) == "number" and Config.WeeklyEvents[forced] then forced else Config.EventIndexAt(os.time())
+	return Config.WeeklyEvents[idx]
+end
+
+function Config.EventEndsAt(t: number): number
+	return (Config.WeekIndex(t) + 1) * 604800 - 3 * 86400
+end
 
 Config.FriendBoostPer = 0.10
 Config.FriendBoostMax = 0.30

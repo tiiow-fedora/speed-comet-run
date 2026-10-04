@@ -84,7 +84,7 @@ function DevTest.run()
 	local w0 = p.Wins
 	tp(s1.PadZ)
 	task.wait(0.6)
-	check("pad1 pays wins", p.Wins == w0 + s1.Wins * Gameplay.winsMultiplier(player), p.Wins - w0)
+	check("pad1 pays wins", p.Wins == w0 + math.floor(s1.Wins * Gameplay.winsMultiplier(player)), p.Wins - w0)
 	check("checkpoint=1", (Gameplay.runtime(player) :: any).checkpoint == 1)
 	-- 3. no double claim
 	local w1 = p.Wins
@@ -239,6 +239,57 @@ function DevTest.run()
 	p.Speed = 5000
 	task.wait(1.2)
 	check("BestSpeed follows Speed", p.BestSpeed >= 5000, p.BestSpeed)
+
+	-- 14. v3 map: bright palette, daytime atmosphere, landmark, gentle first gaps
+	local fl = Config.Zones[1].Floor
+	check("bright palette (Moon floor luminance)", 0.2126 * fl.R + 0.7152 * fl.G + 0.0722 * fl.B > 0.55)
+	local lighting = game:GetService("Lighting")
+	check("daytime sky + atmosphere", lighting.ClockTime > 8 and lighting.ClockTime < 17 and lighting:FindFirstChildOfClass("Atmosphere") ~= nil)
+	local decor = workspace.Map:FindFirstChild("Decor")
+	check("comet landmark + spawn arch", decor ~= nil and decor:FindFirstChild("CometLandmark") ~= nil and decor:FindFirstChild("SpawnArch") ~= nil)
+	check("landmark uses Blender meshes", decor ~= nil and decor:FindFirstChild("CometLandmark") ~= nil and (decor :: any).CometLandmark:FindFirstChild("Tail") ~= nil)
+
+	-- 15. v3 Comet Shards: +Speed once per lap, server-validated by position, reset by a new lap
+	game:GetService("ReplicatedStorage"):SetAttribute("ForceEvent", 2) -- Wins Rush: shard mult 1
+	check("shards placed in first stages", #layout.Shards >= 15, #layout.Shards)
+	Gameplay.resetLap(player)
+	local lap0 = (player:GetAttribute("Lap") :: number?) or 0
+	local sh = layout.Shards[3]
+	p.Speed = 100
+	local expectShard = math.floor(math.max(Config.ShardMin, Gameplay.multiplier(player, p) * Config.ShardSeconds))
+	tp(sh.Pos.Z, sh.Pos.Y)
+	task.wait(0.4)
+	local got = p.Speed - 100
+	check("shard gives speed", got >= expectShard and got < expectShard + 20, got)
+	local afterFirst = p.Speed
+	tp(sh.Pos.Z - 10)
+	task.wait(0.3)
+	tp(sh.Pos.Z, sh.Pos.Y)
+	task.wait(0.4)
+	check("shard only once per lap", p.Speed - afterFirst < expectShard, p.Speed - afterFirst)
+	Gameplay.resetLap(player)
+	check("new lap bumps Lap attr", ((player:GetAttribute("Lap") :: number?) or 0) == lap0 + 1)
+	local beforeLap = p.Speed
+	tp(sh.Pos.Z, sh.Pos.Y)
+	task.wait(0.4)
+	check("shard collectable again after new lap", p.Speed - beforeLap >= expectShard, p.Speed - beforeLap)
+
+	-- 16. v3 weekly rotation: deterministic by UTC week, multipliers applied, schedule cycles
+	local t0 = 1791158400 -- a Monday 00:00 UTC
+	check("event index stable within a week", Config.EventIndexAt(t0) == Config.EventIndexAt(t0 + 6 * 86400 + 86399))
+	check("event index advances weekly", Config.EventIndexAt(t0 + 7 * 86400) == (Config.EventIndexAt(t0) % #Config.WeeklyEvents) + 1)
+	check("event ends at next Monday", Config.EventEndsAt(t0 + 3600) == t0 + 7 * 86400)
+	local RS = game:GetService("ReplicatedStorage")
+	RS:SetAttribute("ForceEvent", 2)
+	local baseMult = Gameplay.multiplier(player, p)
+	RS:SetAttribute("ForceEvent", 4) -- Speed Week x1.25
+	check("Speed Week multiplies gain", math.abs(Gameplay.multiplier(player, p) - baseMult * 1.25) < 1e-6)
+	RS:SetAttribute("ForceEvent", 3) -- Quest Bonus x2
+	local qd = Quests.def("pads15") :: any
+	local qBonus = Quests.reward(p, qd)
+	RS:SetAttribute("ForceEvent", 2)
+	check("Quest Bonus doubles quest reward", qBonus == 2 * Quests.reward(p, qd), qBonus)
+	RS:SetAttribute("ForceEvent", nil)
 
 	-- restore
 	for k, v in backup do

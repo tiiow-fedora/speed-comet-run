@@ -13,6 +13,9 @@ local PROPS: { [string]: number } = {
 	Rock2 = 121471108529248,
 	Rock3 = 79693074857712,
 	Crystal = 103157670483871,
+	CometHead = 95764825699862,
+	CometTail = 125542314750590,
+	SpawnArch = 140335356772770,
 }
 
 function PropLoader.load(timeout: number)

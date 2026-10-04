@@ -33,7 +33,7 @@ Quests.def = def
 
 function Quests.reward(p: DataService.Profile, d: Config.QuestDef): number
 	local st = Config.Stages[math.clamp(p.BestStage, 1, #Config.Stages)]
-	return d.Mult * math.max(Config.QuestMinBase, st.Wins)
+	return math.floor(d.Mult * math.max(Config.QuestMinBase, st.Wins) * Config.CurrentEvent().QuestMult)
 end
 
 -- Make sure the profile holds today's three quests (new day -> new quests).

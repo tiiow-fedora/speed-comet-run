@@ -37,6 +37,8 @@ local toastHolder: Frame
 local panels: { [string]: Frame } = {}
 local sideButtons: { [string]: TextButton } = {}
 local refreshers: { () -> () } = {}
+local stripDots: { Frame } = {}
+local popHolder: Frame
 local musicOn = true
 
 local function attr(name: string, default: any): any
@@ -347,6 +349,30 @@ end
 
 local function buildDaily()
 	local _, list = makePanel("Daily", "🎁 DAILY REWARD", Theme.Green)
+	-- v3: 7-day streak strip so the reason to come back tomorrow is visible
+	local streakRow = row(list, 0, 64)
+	local dayBoxes = {}
+	for d = 1, Config.DailyMaxDay do
+		local box = Theme.label({
+			Text = "Day " .. d .. "\n🏆" .. (Config.DailyWinsPerDay * d) .. (if d == Config.DailyMaxDay then "+🧪" else ""),
+			Size = UDim2.new(1 / Config.DailyMaxDay, -6, 1, -10),
+			Position = UDim2.new((d - 1) / Config.DailyMaxDay, 3, 0, 5),
+			BackgroundTransparency = 0,
+			BackgroundColor3 = Theme.Bg,
+			Font = Theme.BodyFont,
+			ZIndex = 23,
+			Parent = streakRow,
+		})
+		Theme.corner(8).Parent = box
+		dayBoxes[d] = box
+	end
+	table.insert(refreshers, function()
+		local day = attr("DailyDay", 1)
+		for d, box in dayBoxes do
+			box.BackgroundColor3 = if d < day then Theme.Green elseif d == day then Theme.Gold else Theme.Bg
+			box.TextColor3 = if d == day then Color3.fromRGB(40, 30, 10) else Theme.Text
+		end
+	end)
 	local r = row(list, 1, 200)
 	local info = Theme.label({
 		Size = UDim2.new(1, -24, 0, 120),
@@ -501,6 +527,28 @@ local function buildTop()
 		Hud.promptProduct("SkipStage")
 	end)
 
+	-- v3 galaxy progress strip: one dot per stage in its zone color; filled = reached
+	local strip = new("Frame", {
+		Name = "GalaxyStrip",
+		Size = UDim2.fromOffset(15 * 20, 14),
+		Position = UDim2.fromOffset(150, 130),
+		BackgroundTransparency = 1,
+		Parent = top,
+	})
+	new("UIListLayout", { FillDirection = Enum.FillDirection.Horizontal, Padding = UDim.new(0, 4), SortOrder = Enum.SortOrder.LayoutOrder, Parent = strip })
+	for i, st in Config.Stages do
+		local dot = new("Frame", {
+			Name = "Dot" .. i,
+			Size = UDim2.fromOffset(16, 12),
+			BackgroundColor3 = Config.Zones[st.Zone].Accent,
+			LayoutOrder = i,
+			Parent = strip,
+		})
+		Theme.corner(6).Parent = dot
+		new("UIStroke", { Color = Color3.new(1, 1, 1), Thickness = 0, Parent = dot })
+		stripDots[i] = dot
+	end
+
 	boostRow = new("Frame", {
 		Size = UDim2.fromOffset(600, 24),
 		Position = UDim2.fromOffset(0, 102),
@@ -555,7 +603,7 @@ local function buildSide()
 		{ "Daily", "🎁", "DAILY", Theme.Green },
 		{ "Restart", "↩️", "RESTART", Color3.fromRGB(120, 200, 255) },
 		{ "Quests", "📜", "QUESTS", Color3.fromRGB(255, 170, 90) },
-		{ "Invite", "👥", "INVITE", Color3.fromRGB(150, 120, 255) },
+		{ "Invite", "👥", "+10%", Color3.fromRGB(150, 120, 255) },
 		{ "Slow", "🐢", "SLOW: OFF", Color3.fromRGB(140, 220, 140) },
 		{ "Music", "🎵", "MUSIC: ON", Color3.fromRGB(255, 170, 90) },
 	}
@@ -658,6 +706,48 @@ function Hud.hint(text: string?)
 	end
 end
 
+-- v3: one short, concrete next goal (shown under the HUD when the tutorial is done)
+function Hud.nextGoal(): string?
+	local wins = attr("Wins", 0)
+	local owned = ownedBoots()
+	for i, boot in Config.Boots do
+		if not owned[i] and wins >= boot.Cost then
+			return "Next: buy " .. boot.Name .. " 👟"
+		end
+	end
+	local n = Hud.nextStage()
+	if not n then
+		return "Next: reach the FINISH 🏁"
+	end
+	local req = Config.Stages[n].Req
+	local speed = attr("Speed", 0)
+	if speed >= req then
+		return "Next: Gate " .. n .. " pad 🏆"
+	elseif speed < req * 0.5 and n > 2 then
+		return "Next: ⚡" .. Format.short(req) .. ". Tip: ↩️ RESTART farms Wins"
+	end
+	return "Next: ⚡" .. Format.short(req) .. " opens Gate " .. n
+end
+
+-- v3: small floating "+N ⚡" near the center for pickups
+function Hud.popText(text: string)
+	if not popHolder then
+		return
+	end
+	local t = Theme.label({
+		Text = text,
+		Size = UDim2.fromOffset(200, 34),
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.6),
+		TextColor3 = Color3.fromRGB(120, 255, 240),
+		Parent = popHolder,
+	})
+	TweenService:Create(t, TweenInfo.new(0.7, Enum.EasingStyle.Quad), { Position = UDim2.fromScale(0.5, 0.3), TextTransparency = 1 }):Play()
+	task.delay(0.8, function()
+		t:Destroy()
+	end)
+end
+
 -- Which gate is next for this player, based on the server's checkpoint.
 function Hud.nextStage(): number?
 	local cp = attr("Checkpoint", 0)
@@ -696,8 +786,19 @@ local function refreshTop()
 		barText.Text = "All gates open! Reach the FINISH"
 		skipButton.Visible = false
 	end
+	local best = attr("BestStage", 0)
+	local cpNow = attr("Checkpoint", 0)
+	for i, dot in stripDots do
+		dot.BackgroundTransparency = if i <= best then 0 else 0.65
+		local stroke = dot:FindFirstChildOfClass("UIStroke")
+		if stroke then
+			stroke.Thickness = if i == cpNow + 1 then 2 else 0
+		end
+	end
 	-- boosts row: only rebuilt when its contents change (it used to be rebuilt every tick)
 	local boosts: { { string | Color3 } } = {}
+	local ev = Config.CurrentEvent()
+	table.insert(boosts, { "🎉 " .. ev.Name, Color3.fromRGB(255, 170, 230) })
 	if attr("PotionLeft", 0) > 0 then
 		table.insert(boosts, { "🧪 3x " .. Format.time(attr("PotionLeft", 0)), Theme.Pink })
 	end
@@ -789,6 +890,14 @@ function Hud.build()
 	fit()
 	gui:GetPropertyChangedSignal("AbsoluteSize"):Connect(fit)
 
+	popHolder = new("Frame", {
+		Name = "Pops",
+		AnchorPoint = Vector2.new(0.5, 0.5),
+		Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.fromOffset(300, 300),
+		BackgroundTransparency = 1,
+		Parent = root,
+	})
 	toastHolder = new("Frame", {
 		Name = "Toasts",
 		AnchorPoint = Vector2.new(0.5, 0),
@@ -802,8 +911,8 @@ function Hud.build()
 	hintFrame = new("Frame", {
 		Name = "Hint",
 		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0, 140),
-		Size = UDim2.fromOffset(560, 50),
+		Position = UDim2.new(0.5, 0, 0, 152),
+		Size = UDim2.fromOffset(440, 40),
 		BackgroundColor3 = Theme.Bg,
 		BackgroundTransparency = 0.1,
 		Visible = false,

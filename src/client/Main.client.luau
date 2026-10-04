@@ -1,6 +1,7 @@
 --!strict
 -- Client entry: HUD, gates, onboarding guide beam + hints, notifications, VIP chat tag.
 
+local CollectionService = game:GetService("CollectionService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -39,6 +40,25 @@ local function setStep(n: number)
 end
 
 Gates.start(function(stage)
+	local wall = Gates.find(stage)
+	if wall then
+		-- v3: visible feedback when a gate opens
+		local att = Instance.new("Attachment")
+		att.Parent = wall
+		local pe = Instance.new("ParticleEmitter")
+		pe.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+		pe.Rate = 0
+		pe.Speed = NumberRange.new(15, 30)
+		pe.Lifetime = NumberRange.new(0.6, 1.1)
+		pe.SpreadAngle = Vector2.new(70, 70)
+		pe.Size = NumberSequence.new(1.4, 0)
+		pe.Color = ColorSequence.new(Theme.Green)
+		pe.Parent = att
+		pe:Emit(60)
+		task.delay(1.5, function()
+			att:Destroy()
+		end)
+	end
 	Hud.toast("Gate " .. stage .. " is OPEN!", Theme.Green)
 end)
 
@@ -106,7 +126,7 @@ local function ensureBeam(): Beam?
 	return b
 end
 
-local jumpHint = if UserInputService.TouchEnabled then "tap ⬆ to jump the gaps" else "press SPACE to jump the gaps"
+local jumpShort = if UserInputService.TouchEnabled then "Tap ⬆ to jump" else "SPACE to jump"
 
 local function hintText(): string?
 	local speed = (player:GetAttribute("Speed") :: number?) or 0
@@ -121,20 +141,15 @@ local function hintText(): string?
 		end
 		tutorialStep = derived
 	end
+	-- v3: short hints (<= ~6 words), and always a concrete next goal after the tutorial
 	if tutorialStep == 1 then
-		return "Every second = +⚡ Speed! Reach ⚡" .. req1 .. " to open the gate (" .. math.min(speed, req1) .. "/" .. req1 .. "), " .. jumpHint
+		return "Grab ⚡ shards, run to the gate! " .. math.min(speed, req1) .. "/" .. req1
 	elseif tutorialStep == 2 then
-		return "The gate is open! Run through, " .. jumpHint .. ", and step on the 🏆 pad"
+		return "Gate open! " .. jumpShort .. " to the 🏆 pad"
 	elseif tutorialStep == 3 then
-		return "You got Wins! Spend them on faster Boots: tap 👟 BOOTS"
+		return "Buy faster Boots! 👟"
 	end
-	if n then
-		local req = Config.Stages[n].Req
-		if speed < req * 0.5 and n > 2 then
-			return "Gate " .. n .. " needs ⚡" .. Format.short(req) .. ". Tap ↩️ RESTART to farm Wins pads, then buy faster Boots!"
-		end
-	end
-	return nil
+	return Hud.nextGoal()
 end
 
 local lastBeamUpdate = 0
@@ -156,11 +171,8 @@ RunService.Heartbeat:Connect(function()
 		targetAtt.WorldPosition = Vector3.new(0, Config.TrackY + 0.5, target.Position.Z)
 		marker.Enabled = true
 		arrow.TextColor3 = if speed >= Config.Stages[n :: number].Req then Theme.Gold else Theme.Red
-		local char = player.Character
-		local hrp = char and char:FindFirstChild("HumanoidRootPart") :: BasePart?
-		local far = hrp ~= nil and (hrp.Position - targetAtt.WorldPosition).Magnitude > 70
 		if b then
-			b.Enabled = far
+			b.Enabled = false -- v3: the beam read as a yellow strip on the floor; the marker is enough
 		end
 	else
 		marker.Enabled = false
@@ -190,6 +202,54 @@ local function playIntro()
 	tw:Play()
 	tw.Completed:Wait()
 	cam.CameraType = Enum.CameraType.Custom
+end
+
+-- re-show this player's shards when a new lap starts (server bumps the Lap attribute)
+player:GetAttributeChangedSignal("Lap"):Connect(function()
+	for _, sh in CollectionService:GetTagged("Shard") do
+		if sh:IsA("BasePart") then
+			sh.LocalTransparencyModifier = 0
+		end
+	end
+end)
+
+-- slowly spinning shards (client-side visual only; ~30 parts, 10 Hz)
+task.spawn(function()
+	local angle = 0
+	while true do
+		task.wait(0.1)
+		angle += 0.25
+		for _, sh in CollectionService:GetTagged("Shard") do
+			if sh:IsA("BasePart") then
+				local pos = sh.Position
+				sh.CFrame = CFrame.new(pos) * CFrame.Angles(0, angle, 0) * CFrame.Angles(math.rad(45), 0, math.rad(45))
+			end
+		end
+	end
+end)
+
+-- ambient sparkles around the camera (cheap: one emitter, low rate)
+do
+	local holder = Instance.new("Part")
+	holder.Name = "AmbientSparkles"
+	holder.Anchored = true
+	holder.CanCollide, holder.CanTouch, holder.CanQuery = false, false, false
+	holder.Transparency = 1
+	holder.Size = Vector3.new(60, 20, 60)
+	holder.Parent = workspace
+	local pe = Instance.new("ParticleEmitter")
+	pe.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	pe.Rate = 6
+	pe.Lifetime = NumberRange.new(3, 5)
+	pe.Speed = NumberRange.new(0.5, 1.5)
+	pe.SpreadAngle = Vector2.new(180, 180)
+	pe.Size = NumberSequence.new({ NumberSequenceKeypoint.new(0, 0), NumberSequenceKeypoint.new(0.5, 0.35), NumberSequenceKeypoint.new(1, 0) })
+	pe.Color = ColorSequence.new(Color3.fromRGB(255, 220, 255), Color3.fromRGB(180, 240, 255))
+	pe.LightEmission = 0.4
+	pe.Parent = holder
+	RunService.RenderStepped:Connect(function()
+		holder.CFrame = CFrame.new(workspace.CurrentCamera.CFrame.Position)
+	end)
 end
 
 -- point the camera down the track after each spawn/teleport to spawn
@@ -240,6 +300,28 @@ remotes.Notify.OnClientEvent:Connect(function(kind: string, text: string, extra:
 			task.spawn(faceCamera, player.Character)
 		end
 		Hud.toast(text, Theme.Accent)
+	elseif kind == "shard" then
+		Sfx.play("buy", 0.35)
+		Hud.popText(text)
+		local id = extra and extra.id
+		for _, sh in CollectionService:GetTagged("Shard") do
+			if sh:GetAttribute("Id") == id and sh:IsA("BasePart") then
+				sh.LocalTransparencyModifier = 1
+				local burst = Instance.new("ParticleEmitter")
+				burst.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+				burst.Rate = 0
+				burst.Speed = NumberRange.new(8, 14)
+				burst.Lifetime = NumberRange.new(0.4, 0.7)
+				burst.SpreadAngle = Vector2.new(180, 180)
+				burst.Size = NumberSequence.new(0.7, 0)
+				burst.Color = ColorSequence.new(Color3.fromRGB(120, 255, 240))
+				burst.Parent = sh
+				burst:Emit(18)
+				task.delay(1, function()
+					burst:Destroy()
+				end)
+			end
+		end
 	elseif kind == "quest" then
 		Sfx.play("gate")
 		Hud.toast(text, Color3.fromRGB(255, 170, 90))
