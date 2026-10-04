@@ -1,0 +1,15 @@
+Release v2 (R1+R2) Studio checklist, 2026-10-04
+1. DevTest (Play, iPhone 7 emulator) 01:47:48 -> DEVTEST DONE: 44 pass, 0 fail
+   (new: map part count 1171 < 4000, 2 jump signs, decor CanTouch off, migration keeps v1 values,
+    migration adds v2 defaults, migration rejects wrong types, 3 quests/today, one per tier,
+    pad/play quest progress, claim pays, double/unfinished/bad claims ignored, Quests attr synced,
+    BestSpeed follows Speed)
+2. 2-client local server (Player1 + Player2), 01:49:02 -> 02:00:44:
+   PLAYERS 2 Player1 920 Player2 810, Player2 has own quests (play 10/25 min)
+   DevTest on Player1 -> 44 pass, 0 fail; P2 AFTER 825 0 (untouched)
+3. Clean session: server Output 01:49:02 -> 02:00:30 (11.5 min, 2 clients) contained only
+   "[CometRun] server ready, 15 stages, track length 7614, map parts 1171" + the test lines. 0 errors, 0 warnings.
+   Earlier single-client 10-min session 01:32:22 -> 01:42:35: only the server-ready line.
+4. Phone (iPhone 7 667x375 emulator): grid top-left clear of thumbstick, Quests panel fits
+   (run2/r1_phone_iphone7.jpg, run2/r2_quests_phone.jpg). JUMP sign + guide marker (run2/r1_jump_sign_marker.jpg),
+   intro camera + welcome toast (run2/r1_intro_welcome.jpg).
