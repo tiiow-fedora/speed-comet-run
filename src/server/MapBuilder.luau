@@ -226,9 +226,20 @@ local function pad(z: number, stageIndex: number, wins: number, zone: Config.Zon
 		Shape = "Cylinder",
 		Size = Vector3.new(1, 22, 22),
 		CFrame = CFrame.new(0, Y + 0.2, z) * CFrame.Angles(0, 0, math.rad(90)),
+		Color = Color3.fromRGB(230, 180, 50),
+		Material = Enum.Material.SmoothPlastic,
+		CanCollide = false,
+	}, parent)
+	part({
+		Name = "PadRing",
+		Shape = "Cylinder",
+		Size = Vector3.new(1.1, 23, 23),
+		CFrame = CFrame.new(0, Y + 0.15, z) * CFrame.Angles(0, 0, math.rad(90)),
 		Color = Color3.fromRGB(255, 220, 60),
 		Material = Enum.Material.Neon,
+		Transparency = 0.55,
 		CanCollide = false,
+		CanQuery = false,
 	}, parent)
 	p:SetAttribute("Stage", stageIndex)
 	CollectionService:AddTag(p, "WinsPad")

@@ -23,6 +23,7 @@ type Runtime = {
 	sampleFrom: Vector3?,
 	sampleT: number,
 	finishing: boolean,
+	slow: boolean,
 }
 
 local layout: MapBuilder.Layout
@@ -96,7 +97,12 @@ function Gameplay.applyWalkSpeed(player: Player, p: DataService.Profile)
 	local c = player.Character
 	local hum = c and c:FindFirstChildOfClass("Humanoid")
 	if hum then
-		hum.WalkSpeed = Config.WalkSpeedFor(p.Speed)
+		local ws = Config.WalkSpeedFor(p.Speed)
+		local rt = runtime[player]
+		if rt and rt.slow then
+			ws = math.min(ws, Config.SlowWalkSpeed)
+		end
+		hum.WalkSpeed = ws
 	end
 end
 
@@ -278,6 +284,7 @@ function Gameplay.addPlayer(player: Player)
 		sampleFrom = nil,
 		sampleT = 0,
 		finishing = false,
+		slow = false,
 	}
 	player:SetAttribute("Checkpoint", 0)
 	refreshFriends()
@@ -288,8 +295,15 @@ function Gameplay.removePlayer(player: Player)
 	refreshFriends()
 end
 
--- Accumulated play time/potion persistence happens in the tick; nothing extra needed before save.
-function Gameplay.beforeSave(_player: Player) end
+function Gameplay.setSlow(player: Player, on: boolean)
+	local rt = runtime[player]
+	local p = DataService.get(player)
+	if rt and p then
+		rt.slow = on
+		player:SetAttribute("Slow", on)
+		Gameplay.applyWalkSpeed(player, p)
+	end
+end
 
 function Gameplay.resetLap(player: Player)
 	local rt = runtime[player]

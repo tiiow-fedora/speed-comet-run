@@ -465,7 +465,7 @@ local function buildSide()
 	local side = new("Frame", {
 		Name = "Side",
 		Position = UDim2.fromOffset(8, 72),
-		Size = UDim2.fromOffset(2 * 76 + 8, 3 * 76 + 16),
+		Size = UDim2.fromOffset(2 * 76 + 8, 3 * 80),
 		BackgroundTransparency = 1,
 		Parent = root,
 	})
@@ -476,6 +476,16 @@ local function buildSide()
 		SortOrder = Enum.SortOrder.LayoutOrder,
 		Parent = side,
 	})
+	-- right column: social / settings, clear of the jump button (bottom-right)
+	local right = new("Frame", {
+		Name = "SideRight",
+		AnchorPoint = Vector2.new(1, 0),
+		Position = UDim2.new(1, -8, 0, 72),
+		Size = UDim2.fromOffset(72, 2 * 80),
+		BackgroundTransparency = 1,
+		Parent = root,
+	})
+	new("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder, Parent = right })
 	local defs = {
 		{ "Shop", "👟", "BOOTS", Theme.Accent },
 		{ "Rebirth", "🔁", "REBIRTH", Theme.Pink },
@@ -483,6 +493,7 @@ local function buildSide()
 		{ "Daily", "🎁", "DAILY", Theme.Green },
 		{ "Restart", "↩️", "RESTART", Color3.fromRGB(120, 200, 255) },
 		{ "Invite", "👥", "INVITE", Color3.fromRGB(150, 120, 255) },
+		{ "Slow", "🐢", "SLOW: OFF", Color3.fromRGB(140, 220, 140) },
 	}
 	for i, d in defs do
 		local b = new("TextButton", {
@@ -493,12 +504,12 @@ local function buildSide()
 			Text = "",
 			LayoutOrder = i,
 			AutoButtonColor = true,
-			Parent = side,
+			Parent = if d[1] == "Invite" or d[1] == "Slow" then right else side,
 		})
 		Theme.corner(16).Parent = b
 		Theme.stroke(d[4], 3).Parent = b
 		Theme.label({ Text = d[2], Size = UDim2.new(1, 0, 0, 40), Position = UDim2.fromOffset(0, 4), Parent = b })
-		Theme.label({ Text = d[3], Size = UDim2.new(1, -6, 0, 20), Position = UDim2.new(0, 3, 1, -24), TextColor3 = d[4], Parent = b })
+		Theme.label({ Name = "Label", Text = d[3], Size = UDim2.new(1, -6, 0, 20), Position = UDim2.new(0, 3, 1, -24), TextColor3 = d[4], Parent = b })
 		local dot = new("Frame", {
 			Name = "Dot",
 			Size = UDim2.fromOffset(18, 18),
@@ -510,7 +521,11 @@ local function buildSide()
 		Theme.corner(9).Parent = dot
 		sideButtons[d[1]] = b
 		b.Activated:Connect(function()
-			if d[1] == "Restart" then
+			if d[1] == "Slow" then
+				local on = not player:GetAttribute("Slow")
+				remotes.SetSlow:FireServer(on)
+				Hud.toast(if on then "Slow mode ON: easier jumps" else "Slow mode OFF: full speed!", Theme.Green)
+			elseif d[1] == "Restart" then
 				remotes.RestartLap:FireServer()
 				Hud.toast("Back to the start! Wins pads pay out again", Theme.Accent)
 			elseif d[1] == "Invite" then
@@ -645,6 +660,11 @@ local function refreshTop()
 	Hud.setDot("Shop", canBuy)
 	Hud.setDot("Rebirth", speed >= Config.RebirthCost(attr("Rebirths", 0)))
 	Hud.setDot("Daily", attr("DailyReady", false))
+	local slowBtn = sideButtons["Slow"]
+	local slowLabel = slowBtn and slowBtn:FindFirstChild("Label") :: TextLabel?
+	if slowLabel then
+		slowLabel.Text = if attr("Slow", false) then "SLOW: ON" else "SLOW: OFF"
+	end
 end
 
 local function applyScale(scale: UIScale, v: Vector2)
@@ -727,7 +747,7 @@ function Hud.build()
 			end
 		end
 	end
-	for _, name in { "Speed", "Gain", "Wins", "Rebirths", "Boot", "OwnedBoots", "PotionLeft", "Checkpoint", "Friends", "DailyReady", "DailyDay", "Pass_Speed2x", "Pass_Wins2x", "Pass_VIP" } do
+	for _, name in { "Speed", "Gain", "Wins", "Rebirths", "Boot", "OwnedBoots", "PotionLeft", "Checkpoint", "Friends", "DailyReady", "DailyDay", "Pass_Speed2x", "Pass_Wins2x", "Pass_VIP", "Slow" } do
 		player:GetAttributeChangedSignal(name):Connect(refreshAll)
 	end
 	refreshAll()

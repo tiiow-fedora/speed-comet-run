@@ -8,6 +8,7 @@ local StarterPlayer = game:GetService("StarterPlayer")
 local Config = require(ReplicatedStorage.Shared.Config)
 local MapBuilder = require(script.Parent.MapBuilder)
 local PropLoader = require(script.Parent.PropLoader)
+local Leaderboard = require(script.Parent.Leaderboard)
 local DataService = require(script.Parent.DataService)
 local State = require(script.Parent.State)
 local Passes = require(script.Parent.Passes)
@@ -22,6 +23,8 @@ StarterPlayer.CharacterWalkSpeed = Config.BaseWalkSpeed
 
 PropLoader.load(8)
 local layout = MapBuilder.build()
+Leaderboard.build(workspace:WaitForChild("Map"))
+Leaderboard.start()
 
 -- Remotes
 local remotes = Instance.new("Folder")
@@ -39,6 +42,7 @@ local rebirth = remote("Rebirth")
 local claimDaily = remote("ClaimDaily")
 local tutorialDone = remote("TutorialDone")
 local restartLap = remote("RestartLap")
+local setSlow = remote("SetSlow")
 remotes.Parent = ReplicatedStorage
 
 local function guarded(name: string, rate: number, fn: (Player, ...any) -> ())
@@ -60,6 +64,9 @@ claimDaily.OnServerEvent:Connect(guarded("ClaimDaily", 1, Shop.claimDaily))
 restartLap.OnServerEvent:Connect(guarded("RestartLap", 0.5, function(player: Player)
 	Gameplay.resetLap(player)
 	Gameplay.teleport(player, layout.SpawnCFrame)
+end))
+setSlow.OnServerEvent:Connect(guarded("SetSlow", 2, function(player: Player, on: any)
+	Gameplay.setSlow(player, on == true)
 end))
 tutorialDone.OnServerEvent:Connect(guarded("TutorialDone", 1, function(player: Player)
 	local p = DataService.get(player)
@@ -105,7 +112,12 @@ Players.PlayerRemoving:Connect(function(player)
 	RateLimit.clear(player)
 end)
 
-DataService.start(Gameplay.beforeSave)
+DataService.start(function(player: Player)
+	local p = DataService.get(player)
+	if p and DataService.isLoaded(player) then
+		Leaderboard.submit(player.UserId, p.TotalWins)
+	end
+end)
 
 -- Studio-only hook so the command bar can run the self test inside the game's VM:
 --   game.ServerScriptService.DevRun:Invoke()

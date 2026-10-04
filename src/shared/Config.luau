@@ -10,6 +10,7 @@ Config.Gravity = 80
 Config.JumpHeight = 16
 Config.BaseWalkSpeed = 16
 Config.MaxWalkSpeed = 140
+Config.SlowWalkSpeed = 45 -- optional 'slow mode' cap for precise jumps
 Config.TrackY = 200
 Config.TrackWidth = 40
 Config.KillY = 120 -- below this you fell into space

@@ -25,3 +25,11 @@ Loaded at server start by `src/server/PropLoader.luau` (InsertService:LoadAsset;
 | error | 120527728848426 | Reviewing |
 | rebirth | 124698389615184 | Reviewing |
 | lap | 133366217740292 | Reviewing |
+
+## 2D images (generated)
+| What | Source | Where used |
+|---|---|---|
+| Game icon 512x512 | `blender/icon.py` (Blender EEVEE render of primitive shapes + Arial Bold "+1") | Experience icon |
+| Pass/product icons 512x512 (8) | `art/make_icons.py` (PIL polygons + Arial Bold text; no emoji fonts or external art) | Uploaded with PATCH `imageFile` to each pass/product |
+
+Arial Bold (Windows system font) is only used to render text into the images; the font file itself is not distributed.
