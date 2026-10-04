@@ -34,6 +34,8 @@ function PropLoader.load(timeout: number)
 					mesh.Anchored = true
 					mesh.CanCollide = false
 					mesh.CastShadow = false
+					mesh.CanTouch = false -- clones inherit these; decor needs no touch/raycast work
+					mesh.CanQuery = false
 					mesh.Parent = folder
 				else
 					warn("[Props] no MeshPart in asset " .. id)

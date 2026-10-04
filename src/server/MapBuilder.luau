@@ -21,7 +21,7 @@ export type StageLayout = {
 	Req: number,
 	Wins: number,
 }
-export type Layout = { Stages: { StageLayout }, SpawnCFrame: CFrame, EndZ: number }
+export type Layout = { Stages: { StageLayout }, SpawnCFrame: CFrame, EndZ: number, PartCount: number? }
 
 local Y = Config.TrackY
 local W = Config.TrackWidth
@@ -46,6 +46,13 @@ local function part(props: { [string]: any }, parent: Instance?): BasePart
 	for k, v in props do
 		if k ~= "Shape" and k ~= "Wedge" then
 			(p :: any)[k] = v
+		end
+	end
+	if not p.CanCollide then
+		-- decoration: no touch/raycast work (gameplay uses position checks, not Touched)
+		p.CanTouch = false
+		if props.CanQuery == nil then
+			p.CanQuery = false
 		end
 	end
 	p.Parent = parent or mapFolder
@@ -465,6 +472,33 @@ function MapBuilder.build(): Layout
 		local segA = 60 + 8 * i
 		floor(z, z + segA, zone, track)
 		z += segA
+		if i <= 2 then
+			-- painted "JUMP!" arrow on the floor right before the first crater gap
+			local sign = part({
+				Name = "JumpSign",
+				Size = Vector3.new(24, 0.2, 24),
+				CFrame = CFrame.new(0, Y + 0.11, z - 13),
+				Transparency = 1,
+				CanCollide = false,
+			}, deco)
+			local sg = Instance.new("SurfaceGui")
+			sg.Face = Enum.NormalId.Top
+			sg.SizingMode = Enum.SurfaceGuiSizingMode.PixelsPerStud
+			sg.PixelsPerStud = 20
+			sg.LightInfluence = 0
+			sg.Parent = sign
+			local t = Instance.new("TextLabel")
+			t.Size = UDim2.fromScale(1, 0.45)
+			t.Position = UDim2.fromScale(0, 0.275)
+			t.BackgroundTransparency = 1
+			t.Text = "⬆ JUMP! ⬆"
+			t.TextScaled = true
+			t.Font = Enum.Font.FredokaOne
+			t.TextColor3 = Color3.fromRGB(255, 220, 60)
+			t.TextStrokeTransparency = 0
+			t.Rotation = 270 -- reads upright for a player running toward +Z (checked in Studio)
+			t.Parent = sg
+		end
 		-- two crater islands separated by gaps
 		local islandLen = 22 + i
 		for _ = 1, 2 do
@@ -496,6 +530,13 @@ function MapBuilder.build(): Layout
 		})
 	end
 	layout.EndZ = z
+	local count = 0
+	for _, d in mapFolder:GetDescendants() do
+		if d:IsA("BasePart") then
+			count += 1
+		end
+	end
+	layout.PartCount = count
 	-- end wall
 	part({
 		Name = "EndWall",

@@ -15,3 +15,11 @@
 - **01:00 Welcome gift** (3x Speed for 2 min on first join): first-session hook. Gate 2 opens in about a minute for new players.
 - **01:05 Server-wide toasts** on finish and rebirth: social proof and a co-play nudge.
 - **01:10 Galaxy 2** (stages 11–15, zone "Event Horizon", +2 boots x64/x128): the report's #1 retention item, added as Config data only, since MapBuilder/gates/HUD/DevTest are driven by Config. Sim: stage 11 at ~82 min free (~52 min with 2x Speed). Stages 13–15 are multi-session goals.
+
+## Follow-up run
+- **01:26 PLAN_V2 ranking**: rough edges → first 60 s → perf basics → daily quests → Top Speed board → companions → thumbnails. There's no analytics data (0 visits), so the ranking comes from genre research and my own playtests.
+- **01:30 Guide**: the beam turned into a screen-filling cone near its target. Replaced with a bobbing ⬇ marker over the target (red = locked gate, gold = go); the thin beam is shown only beyond 70 studs.
+- **01:30 Tutorial step derived from server state** (Checkpoint/BestStage/Speed) instead of client events, so the hint can't get stuck on "gate is open" after the player has moved on.
+- **01:44 Phone layout check uses screen height (<520 px)** as well as TouchEnabled/KeyboardEnabled. Studio's phone emulator reported a keyboard and put the grid at the desktop position.
+- **01:45 Merge R1 + R2 into one release**: the run has an 80-turn budget, and each publish + live check costs ~6 turns. One full checklist pass (DevTest, 2-client server, phone, 10-min session) covers both.
+- **01:45 Missing icons on two prompts**: all 5 product icons are "Approved" via the Assets API, so it's a Roblox thumbnail CDN delay. No change made.

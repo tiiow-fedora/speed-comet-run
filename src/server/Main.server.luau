@@ -95,7 +95,7 @@ local function onPlayerAdded(player: Player)
 	player:SetAttribute("Loaded", true)
 	if firstJoin then
 		task.delay(3, function()
-			Gameplay.notify(player, "purchase", "Welcome gift: 3x Speed for 2 minutes!")
+			Gameplay.notify(player, "welcome", "Welcome! Gift: 3x Speed for 2 minutes!")
 		end)
 	end
 	player:SetAttribute("DataSaving", DataService.isLoaded(player))
@@ -142,6 +142,11 @@ if game:GetService("RunService"):IsStudio() then
 			player:LoadCharacter()
 			return player.Name .. " welcomed=" .. tostring(welcomed) .. " potion=" .. tostring((DataService.get(player) :: any).PotionLeft)
 		end
+		if what == "welcome" then
+			-- replay the first-join welcome (toast + camera intro) for player N
+			Gameplay.notify(Players:GetPlayers()[tonumber(arg) or 1], "welcome", "Welcome! Gift: 3x Speed for 2 minutes!")
+			return true
+		end
 		if what == "tp" then
 			-- legit server teleport (sets anti-cheat grace) to just before gate `arg`
 			local player = Players:GetPlayers()[1]
@@ -154,4 +159,4 @@ if game:GetService("RunService"):IsStudio() then
 	devRun.Parent = game:GetService("ServerScriptService")
 end
 
-print("[CometRun] server ready, " .. #layout.Stages .. " stages, track length " .. math.floor(layout.EndZ))
+print("[CometRun] server ready, " .. #layout.Stages .. " stages, track length " .. math.floor(layout.EndZ) .. ", map parts " .. tostring(layout.PartCount))

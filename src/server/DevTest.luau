@@ -46,12 +46,28 @@ function DevTest.run()
 			rt.grace = 0
 		end
 		hrp().AssemblyLinearVelocity = Vector3.zero;
-		(player.Character :: Model):PivotTo(CFrame.new(0, y or Config.TrackY + 4, z))
+		(player.Character :: Model):PivotTo(CFrame.lookAt(Vector3.new(0, y or Config.TrackY + 4, z), Vector3.new(0, y or Config.TrackY + 4, z + 10)))
 		local rt2 = Gameplay.runtime(player)
 		if rt2 then
 			rt2.sampleFrom = nil
 		end
 	end
+
+	-- 0. map sanity (v2): part budget, jump signs, decor has no touch/query
+	check("map part count under 4000", (layout.PartCount or 0) > 0 and (layout.PartCount or 0) < 4000, layout.PartCount)
+	local jumpSigns, touchyDecor = 0, 0
+	for _, d in workspace.Map:GetDescendants() do
+		if d:IsA("BasePart") then
+			if d.Name == "JumpSign" then
+				jumpSigns += 1
+			end
+			if not d.CanCollide and d.CanTouch then
+				touchyDecor += 1
+			end
+		end
+	end
+	check("2 jump signs", jumpSigns == 2, jumpSigns)
+	check("non-colliding map parts have CanTouch off", touchyDecor == 0, touchyDecor)
 
 	Gameplay.resetLap(player)
 	local s1 = layout.Stages[1]

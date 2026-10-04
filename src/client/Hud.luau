@@ -456,6 +456,7 @@ local function buildTop()
 	new("UIListLayout", {
 		FillDirection = Enum.FillDirection.Horizontal,
 		HorizontalAlignment = Enum.HorizontalAlignment.Center,
+		SortOrder = Enum.SortOrder.LayoutOrder,
 		Padding = UDim.new(0, 8),
 		Parent = boostRow,
 	})
@@ -465,7 +466,10 @@ local function buildSide()
 	-- 2-column grid on the left. Touch: near the top (chat is collapsed on mobile and the
 	-- thumbstick owns the bottom-left). Desktop: below the Roblox chat window, which
 	-- opens top-left and would otherwise cover these buttons and eat their clicks.
-	local touchFirst = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+	-- (screen height too: Studio's phone emulator and some phones report a keyboard)
+	local cam = workspace.CurrentCamera
+	local shortScreen = cam ~= nil and cam.ViewportSize.Y < 520
+	local touchFirst = (UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled) or shortScreen
 	local side = new("Frame", {
 		Name = "Side",
 		Position = UDim2.fromOffset(8, if touchFirst then 72 else 236),
@@ -637,28 +641,40 @@ local function refreshTop()
 		barText.Text = "All gates open! Reach the FINISH"
 		skipButton.Visible = false
 	end
-	-- boosts row
-	for _, c in boostRow:GetChildren() do
-		if c:IsA("TextLabel") then
-			c:Destroy()
-		end
-	end
-	local function boost(text: string, color: Color3)
-		local l = Theme.label({ Text = text, Size = UDim2.fromOffset(150, 22), TextColor3 = color, Parent = boostRow })
-		l.TextScaled = true
-	end
+	-- boosts row: only rebuilt when its contents change (it used to be rebuilt every tick)
+	local boosts: { { string | Color3 } } = {}
 	if attr("PotionLeft", 0) > 0 then
-		boost("🧪 3x " .. Format.time(attr("PotionLeft", 0)), Theme.Pink)
+		table.insert(boosts, { "🧪 3x " .. Format.time(attr("PotionLeft", 0)), Theme.Pink })
 	end
 	local friends = attr("Friends", 0)
 	if friends > 0 then
-		boost("👥 +" .. math.floor(math.min(friends * Config.FriendBoostPer, Config.FriendBoostMax) * 100) .. "% friends", Theme.Accent)
+		table.insert(boosts, { "👥 +" .. math.floor(math.min(friends * Config.FriendBoostPer, Config.FriendBoostMax) * 100) .. "% friends", Theme.Accent })
 	end
 	if attr("Pass_Speed2x", false) then
-		boost("⚡ 2x Speed", Theme.Green)
+		table.insert(boosts, { "⚡ 2x Speed", Theme.Green })
 	end
 	if attr("Pass_VIP", false) then
-		boost("⭐ VIP", Theme.Gold)
+		table.insert(boosts, { "⭐ VIP", Theme.Gold })
+	end
+	local labels = {}
+	for _, c in boostRow:GetChildren() do
+		if c:IsA("TextLabel") then
+			table.insert(labels, c)
+		end
+	end
+	table.sort(labels, function(x, y)
+		return x.LayoutOrder < y.LayoutOrder
+	end)
+	for i, bdef in boosts do
+		local l = labels[i]
+		if not l then
+			l = Theme.label({ Size = UDim2.fromOffset(150, 22), LayoutOrder = i, Parent = boostRow })
+		end
+		l.Text = bdef[1] :: string
+		l.TextColor3 = bdef[2] :: Color3
+	end
+	for i = #boosts + 1, #labels do
+		labels[i]:Destroy()
 	end
 	-- red dots
 	local wins = attr("Wins", 0)

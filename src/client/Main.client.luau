@@ -4,6 +4,8 @@
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 local TextChatService = game:GetService("TextChatService")
 
 local Config = require(ReplicatedStorage.Shared.Config)
@@ -37,17 +39,44 @@ local function setStep(n: number)
 end
 
 Gates.start(function(stage)
-	if tutorialStep == 1 and stage == 1 then
-		setStep(2)
-	end
 	Hud.toast("Gate " .. stage .. " is OPEN!", Theme.Green)
 end)
 
--- Guide beam from the character to the next target (gate, or pad once the gate is open).
+-- Guide: a bobbing arrow over the next target (gate, or pad once the gate is open),
+-- plus a thin beam only while the target is far away (up close a beam fills the screen).
 local beam: Beam? = nil
 local targetAtt = Instance.new("Attachment")
 targetAtt.Name = "GuideTarget"
 targetAtt.Parent = workspace.Terrain
+
+local marker = Instance.new("BillboardGui")
+marker.Name = "GuideMarker"
+marker.Adornee = targetAtt
+marker.Size = UDim2.fromOffset(90, 90)
+marker.StudsOffsetWorldSpace = Vector3.new(0, 9, 0)
+marker.AlwaysOnTop = true
+marker.LightInfluence = 0
+marker.Enabled = false
+marker.Parent = player:WaitForChild("PlayerGui")
+local arrow = Instance.new("TextLabel")
+arrow.Size = UDim2.fromScale(1, 1)
+arrow.BackgroundTransparency = 1
+arrow.Text = "⬇"
+arrow.TextScaled = true
+arrow.Font = Enum.Font.FredokaOne
+arrow.TextColor3 = Theme.Gold
+arrow.TextStrokeTransparency = 0
+arrow.Parent = marker
+task.spawn(function()
+	local up = true
+	while marker.Parent do
+		TweenService:Create(marker, TweenInfo.new(0.6, Enum.EasingStyle.Sine), {
+			StudsOffsetWorldSpace = Vector3.new(0, if up then 11 else 8, 0),
+		}):Play()
+		up = not up
+		task.wait(0.6)
+	end
+end)
 
 local function ensureBeam(): Beam?
 	local char = player.Character
@@ -65,31 +94,39 @@ local function ensureBeam(): Beam?
 	local b = Instance.new("Beam")
 	b.Attachment0 = a0
 	b.Attachment1 = targetAtt
-	b.Width0 = 0.5
-	b.Width1 = 0.5
+	b.Width0 = 0.3
+	b.Width1 = 0.3
 	b.FaceCamera = true
 	b.LightEmission = 0
 	b.Color = ColorSequence.new(Theme.Gold)
-	b.Transparency = NumberSequence.new(0.3, 0.85)
+	b.Transparency = NumberSequence.new(0.5, 0.9)
 	b.Segments = 1
 	b.Parent = hrp
 	beam = b
 	return b
 end
 
+local jumpHint = if UserInputService.TouchEnabled then "tap ⬆ to jump the gaps" else "press SPACE to jump the gaps"
+
 local function hintText(): string?
 	local speed = (player:GetAttribute("Speed") :: number?) or 0
+	local cp = (player:GetAttribute("Checkpoint") :: number?) or 0
 	local n = Hud.nextStage()
-	if tutorialStep == 1 and speed >= Config.Stages[1].Req then
-		setStep(2)
+	local req1 = Config.Stages[1].Req
+	-- the tutorial step follows real (server) state so it can never go stale
+	if tutorialStep < 3 then
+		local derived = if cp >= 1 or (player:GetAttribute("BestStage") :: number? or 0) >= 1 then 3 elseif speed >= req1 then 2 else 1
+		if derived == 3 and tutorialStep < 3 then
+			Hud.pulse("Shop")
+		end
+		tutorialStep = derived
 	end
 	if tutorialStep == 1 then
-		local req = Config.Stages[1].Req
-		return "Every second you get +⚡ Speed! Reach ⚡" .. req .. " to open the gate (" .. math.min(speed, req) .. "/" .. req .. ")"
+		return "Every second = +⚡ Speed! Reach ⚡" .. req1 .. " to open the gate (" .. math.min(speed, req1) .. "/" .. req1 .. "), " .. jumpHint
 	elseif tutorialStep == 2 then
-		return "The gate is open! Run through and step on the 🏆 Wins pad"
+		return "The gate is open! Run through, " .. jumpHint .. ", and step on the 🏆 pad"
 	elseif tutorialStep == 3 then
-		return "Spend Wins on faster Boots! Tap 👟 BOOTS"
+		return "You got Wins! Spend them on faster Boots: tap 👟 BOOTS"
 	end
 	if n then
 		local req = Config.Stages[n].Req
@@ -110,23 +147,50 @@ RunService.Heartbeat:Connect(function()
 	local n = Hud.nextStage()
 	local speed = (player:GetAttribute("Speed") :: number?) or 0
 	local b = ensureBeam()
-	local showBeam = tutorialStep < 99 or (player:GetAttribute("BestStage") :: number? or 0) < 3
-	if b then
-		if n and showBeam then
-			local target = if speed >= Config.Stages[n].Req then Gates.findPad(n) else Gates.find(n)
-			if target then
-				local pos = target.Position
-				targetAtt.WorldPosition = Vector3.new(0, Config.TrackY + 0.5, pos.Z)
-				b.Enabled = true
-			else
-				b.Enabled = false
-			end
-		else
+	local showGuide = tutorialStep < 99 or (player:GetAttribute("BestStage") :: number? or 0) < 3
+	local target = nil
+	if n and showGuide then
+		target = if speed >= Config.Stages[n].Req then Gates.findPad(n) else Gates.find(n)
+	end
+	if target then
+		targetAtt.WorldPosition = Vector3.new(0, Config.TrackY + 0.5, target.Position.Z)
+		marker.Enabled = true
+		arrow.TextColor3 = if speed >= Config.Stages[n :: number].Req then Theme.Gold else Theme.Red
+		local char = player.Character
+		local hrp = char and char:FindFirstChild("HumanoidRootPart") :: BasePart?
+		local far = hrp ~= nil and (hrp.Position - targetAtt.WorldPosition).Magnitude > 70
+		if b then
+			b.Enabled = far
+		end
+	else
+		marker.Enabled = false
+		if b then
 			b.Enabled = false
 		end
 	end
 	Hud.hint(hintText())
 end)
+
+-- First-join intro: 3 s camera fly-down of the track, then back to the player.
+local function playIntro()
+	local cam = workspace.CurrentCamera
+	local g1 = Gates.find(1)
+	local char = player.Character
+	local hrp = char and char:FindFirstChild("HumanoidRootPart") :: BasePart?
+	if not g1 or not hrp then
+		return
+	end
+	cam.CameraType = Enum.CameraType.Scriptable
+	local y = Config.TrackY
+	cam.CFrame = CFrame.lookAt(Vector3.new(-40, y + 60, g1.Position.Z + 120), Vector3.new(0, y, g1.Position.Z))
+	local tw = TweenService:Create(cam, TweenInfo.new(2.6, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut), {
+		-- end behind the player, looking down the track (+Z)
+		CFrame = CFrame.lookAt(hrp.Position + Vector3.new(0, 7, -16), hrp.Position + Vector3.new(0, 0, 10)),
+	})
+	tw:Play()
+	tw.Completed:Wait()
+	cam.CameraType = Enum.CameraType.Custom
+end
 
 -- point the camera down the track after each spawn/teleport to spawn
 local function faceCamera(char: Model)
@@ -152,7 +216,6 @@ remotes.Notify.OnClientEvent:Connect(function(kind: string, text: string, extra:
 		if not firstWinsSeen then
 			firstWinsSeen = true
 			if tutorialStep <= 2 then
-				setStep(3)
 				Hud.pulse("Shop")
 			end
 		end
@@ -177,6 +240,10 @@ remotes.Notify.OnClientEvent:Connect(function(kind: string, text: string, extra:
 			task.spawn(faceCamera, player.Character)
 		end
 		Hud.toast(text, Theme.Accent)
+	elseif kind == "welcome" then
+		Sfx.play("buy")
+		Hud.toast(text, Theme.Green)
+		task.spawn(playIntro)
 	elseif kind == "announce" then
 		Hud.toast(text, Theme.Accent)
 	elseif kind == "daily" then
