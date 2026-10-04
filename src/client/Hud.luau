@@ -36,6 +36,7 @@ local toastHolder: Frame
 local panels: { [string]: Frame } = {}
 local sideButtons: { [string]: TextButton } = {}
 local refreshers: { () -> () } = {}
+local musicOn = true
 
 local function attr(name: string, default: any): any
 	local v = player:GetAttribute(name)
@@ -484,7 +485,7 @@ local function buildSide()
 		Name = "SideRight",
 		AnchorPoint = Vector2.new(1, 0),
 		Position = UDim2.new(1, -8, 0, 72),
-		Size = UDim2.fromOffset(72, 2 * 80),
+		Size = UDim2.fromOffset(72, 3 * 80),
 		BackgroundTransparency = 1,
 		Parent = root,
 	})
@@ -497,6 +498,7 @@ local function buildSide()
 		{ "Restart", "↩️", "RESTART", Color3.fromRGB(120, 200, 255) },
 		{ "Invite", "👥", "INVITE", Color3.fromRGB(150, 120, 255) },
 		{ "Slow", "🐢", "SLOW: OFF", Color3.fromRGB(140, 220, 140) },
+		{ "Music", "🎵", "MUSIC: ON", Color3.fromRGB(255, 170, 90) },
 	}
 	for i, d in defs do
 		local b = new("TextButton", {
@@ -507,7 +509,7 @@ local function buildSide()
 			Text = "",
 			LayoutOrder = i,
 			AutoButtonColor = true,
-			Parent = if d[1] == "Invite" or d[1] == "Slow" then right else side,
+			Parent = if d[1] == "Invite" or d[1] == "Slow" or d[1] == "Music" then right else side,
 		})
 		Theme.corner(16).Parent = b
 		Theme.stroke(d[4], 3).Parent = b
@@ -524,7 +526,14 @@ local function buildSide()
 		Theme.corner(9).Parent = dot
 		sideButtons[d[1]] = b
 		b.Activated:Connect(function()
-			if d[1] == "Slow" then
+			if d[1] == "Music" then
+				musicOn = not musicOn
+				Sfx.setMusic(musicOn)
+				local lbl = b:FindFirstChild("Label") :: TextLabel?
+				if lbl then
+					lbl.Text = if musicOn then "MUSIC: ON" else "MUSIC: OFF"
+				end
+			elseif d[1] == "Slow" then
 				local on = not player:GetAttribute("Slow")
 				remotes.SetSlow:FireServer(on)
 				Hud.toast(if on then "Slow mode ON: easier jumps" else "Slow mode OFF: full speed!", Theme.Green)

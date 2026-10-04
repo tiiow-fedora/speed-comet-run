@@ -150,6 +150,21 @@ function DataService.load(player: Player): Profile
 	return profile
 end
 
+-- Studio test helper: replace a player's in-memory profile with a brand-new one.
+function DataService.resetForTest(player: Player)
+	local p = profiles[player]
+	if not p then
+		return
+	end
+	local fresh = defaultProfile()
+	for k in pairs(p) do
+		(p :: any)[k] = nil
+	end
+	for k, v in pairs(fresh) do
+		(p :: any)[k] = v
+	end
+end
+
 function DataService.get(player: Player): Profile?
 	return profiles[player]
 end

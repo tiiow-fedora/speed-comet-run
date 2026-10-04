@@ -21,6 +21,7 @@ while not player:GetAttribute("Loaded") do
 end
 
 Hud.build()
+Sfx.startMusic()
 
 -- ===== onboarding =====
 -- Steps: 1 run to gate, 2 gate open -> go through to the pad, 3 got wins -> open the shop, done.
@@ -67,13 +68,9 @@ local function ensureBeam(): Beam?
 	b.Width0 = 0.5
 	b.Width1 = 0.5
 	b.FaceCamera = true
-	b.LightEmission = 0.3
-	b.Texture = "rbxasset://textures/particles/sparkles_main.dds"
-	b.TextureMode = Enum.TextureMode.Static
-	b.TextureLength = 4
-	b.TextureSpeed = 2
+	b.LightEmission = 0
 	b.Color = ColorSequence.new(Theme.Gold)
-	b.Transparency = NumberSequence.new(0.35, 0.8)
+	b.Transparency = NumberSequence.new(0.3, 0.85)
 	b.Segments = 1
 	b.Parent = hrp
 	beam = b

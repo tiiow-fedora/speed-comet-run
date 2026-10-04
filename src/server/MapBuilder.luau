@@ -124,6 +124,18 @@ local function floor(z0: number, z1: number, zone: Config.Zone, parent: Instance
 			Material = Enum.Material.Neon,
 		}, parent)
 	end
+	-- invisible side walls: jumping off the side by accident is frustrating, while
+	-- falling into the crater gaps (which have no walls) is the intended challenge
+	for _, side in { -1, 1 } do
+		part({
+			Name = "SideWall",
+			Size = Vector3.new(1, 40, len),
+			CFrame = CFrame.new(side * (W / 2 + 1.5), Y + 19, z0 + len / 2),
+			Transparency = 1,
+			CanQuery = false,
+			CastShadow = false,
+		}, parent)
+	end
 	-- underside chunk so the track reads as a floating asteroid strip
 	part({
 		Name = "Underside",
@@ -147,8 +159,9 @@ local function island(zc: number, len: number, zone: Config.Zone, parent: Instan
 	part({
 		Name = "IslandRim",
 		Shape = "Cylinder",
-		Size = Vector3.new(0.4, len + 1, len + 1),
-		CFrame = CFrame.new(0, Y - 0.1, zc) * CFrame.Angles(0, 0, math.rad(90)),
+		Size = Vector3.new(0.4, len + 2, len + 2),
+		-- sits just under the island top so only a 1-stud glowing ring shows at the edge
+		CFrame = CFrame.new(0, Y - 0.5, zc) * CFrame.Angles(0, 0, math.rad(90)),
 		Color = zone.Accent,
 		Material = Enum.Material.Neon,
 		CanCollide = false,

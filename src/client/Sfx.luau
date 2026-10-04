@@ -35,4 +35,28 @@ function Sfx.play(name: string, volume: number?)
 	SoundService:PlayLocalSound(s)
 end
 
+-- Background music (synthesized loop, asset id in ASSETS.md)
+local MUSIC_ID = 125033965097301
+local music: Sound? = nil
+
+function Sfx.startMusic()
+	if music then
+		return
+	end
+	local m = Instance.new("Sound")
+	m.Name = "CometMusic"
+	m.SoundId = "rbxassetid://" .. MUSIC_ID
+	m.Looped = true
+	m.Volume = 0.22
+	m.Parent = SoundService
+	m:Play()
+	music = m
+end
+
+function Sfx.setMusic(on: boolean)
+	if music then
+		music.Volume = if on then 0.22 else 0
+	end
+end
+
 return Sfx

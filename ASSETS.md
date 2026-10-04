@@ -19,12 +19,13 @@ Loaded at server start by `src/server/PropLoader.luau` (InsertService:LoadAsset;
 ## Audio (synthesized by `audio/make_sfx.py`: pure sine/square/triangle math, no samples; uploaded as Audio/WAV)
 | Name | Asset ID | Moderation at upload |
 |---|---|---|
-| gate | 82508232118513 | Reviewing |
-| wins | 84896431530730 | Reviewing |
+| gate | 82508232118513 | Approved |
+| wins | 84896431530730 | Approved |
 | buy | 110411125682552 | Reviewing |
 | error | 120527728848426 | Reviewing |
-| rebirth | 124698389615184 | Reviewing |
-| lap | 133366217740292 | Reviewing |
+| rebirth | 124698389615184 | Approved |
+| lap | 133366217740292 | Reviewing → Approved (checked 00:58) |
+| music_loop (30 s, `audio/make_music.py`: sine pads + triangle arpeggio, Cmaj7–Am7–Fmaj7–G6–Em7–Fmaj9) | 125033965097301 | Reviewing |
 
 ## 2D images (generated)
 | What | Source | Where used |
