@@ -1,0 +1,7 @@
+.env
+*.env
+__pycache__/
+*.rbxl
+*.rbxlx
+*.lock
+blender/out/
