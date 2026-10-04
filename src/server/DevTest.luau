@@ -15,6 +15,7 @@ local State = require(script.Parent.State)
 local Gameplay = require(script.Parent.Gameplay)
 local Shop = require(script.Parent.Shop)
 local Monetization = require(script.Parent.Monetization)
+local Quests = require(script.Parent.Quests)
 
 local DevTest = {}
 
@@ -26,6 +27,7 @@ function DevTest.run()
 	local backup = table.clone(p)
 	backup.Boots = table.clone(p.Boots)
 	backup.Receipts = table.clone(p.Receipts)
+	backup.Quests = table.clone(p.Quests)
 	local layout = Gameplay.layout()
 	local results = { pass = 0, fail = 0 }
 	local function check(name: string, cond: boolean, detail: any?)
@@ -191,6 +193,52 @@ function DevTest.run()
 			end
 		end
 	end
+
+	-- 11. save migration (v2): an old-format (v1) save keeps its values and gains v2 defaults
+	local oldSave = {
+		Speed = 123456, Wins = 789, TotalWins = 9999, Rebirths = 2, Boots = { ["1"] = true, ["2"] = true, ["3"] = true },
+		Boot = 3, PotionLeft = 30, DailyStreak = 4, LastDaily = 1791000000, BestStage = 7,
+		Receipts = { "abc", "def" }, TutorialDone = true, PlaySeconds = 3600,
+	}
+	local m = DataService.reconcile(oldSave)
+	check("migration keeps v1 values", m.Speed == 123456 and m.Wins == 789 and m.Rebirths == 2 and m.Boot == 3 and m.Boots["3"] == true and #m.Receipts == 2 and m.BestStage == 7 and m.TutorialDone == true)
+	check("migration adds v2 defaults", m.BestSpeed == 0 and m.QuestDay == 0 and type(m.Quests) == "table" and #m.Quests == 0)
+	local junk = DataService.reconcile({ Speed = "lots", Quests = 5, Boots = {} })
+	check("migration rejects wrong types", junk.Speed == 0 and type(junk.Quests) == "table" and junk.Boots["1"] == true)
+
+	-- 12. daily quests: generation, progress from events, claim once, bad args
+	p.QuestDay = 0
+	Quests.ensure(player, p)
+	check("3 quests for today", #p.Quests == 3 and p.QuestDay == Quests.today())
+	local tiers = {}
+	for _, q in p.Quests do
+		local d = Quests.def(q.Id)
+		tiers[#tiers + 1] = d and d.Tier or 0
+	end
+	check("one quest per tier", tiers[1] == 1 and tiers[2] == 2 and tiers[3] == 3, table.concat(tiers, ","))
+	p.Quests = { { Id = "pads15", P = 0, C = false }, { Id = "play25", P = 0, C = false }, { Id = "finish1", P = 0, C = false } }
+	for _ = 1, 15 do
+		Quests.event(player, "pad", 1)
+	end
+	Quests.event(player, "play", 30)
+	check("pad quest progressed to target", p.Quests[1].P == 15, p.Quests[1].P)
+	check("play quest progressed", p.Quests[2].P == 30, p.Quests[2].P)
+	local wq = p.Wins
+	local expected = Quests.reward(p, Quests.def("pads15") :: any)
+	Quests.claim(player, 1)
+	check("quest claim pays", p.Wins == wq + expected and p.Quests[1].C == true, p.Wins - wq)
+	Quests.claim(player, 1)
+	Quests.claim(player, 2)
+	Quests.claim(player, 9)
+	Quests.claim(player, "1")
+	check("quest double/unfinished/bad claims ignored", p.Wins == wq + expected)
+	check("Quests attribute synced", type(player:GetAttribute("Quests")) == "string" and string.find(player:GetAttribute("Quests") :: string, "Step on 15") ~= nil)
+
+	-- 13. best speed tracking for the Top Speed board
+	p.BestSpeed = 0
+	p.Speed = 5000
+	task.wait(1.2)
+	check("BestSpeed follows Speed", p.BestSpeed >= 5000, p.BestSpeed)
 
 	-- restore
 	for k, v in backup do

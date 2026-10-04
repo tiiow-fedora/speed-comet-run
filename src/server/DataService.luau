@@ -26,6 +26,10 @@ export type Profile = {
 	Receipts: { string }, -- recent PurchaseIds already granted (ring buffer)
 	TutorialDone: boolean,
 	PlaySeconds: number,
+	-- v2 fields (added 2026-10-04). reconcile() fills them with defaults for old saves.
+	BestSpeed: number,
+	QuestDay: number,
+	Quests: { { Id: string, P: number, C: boolean } },
 }
 
 local function defaultProfile(): Profile
@@ -43,6 +47,9 @@ local function defaultProfile(): Profile
 		Receipts = {},
 		TutorialDone = false,
 		PlaySeconds = 0,
+		BestSpeed = 0,
+		QuestDay = 0,
+		Quests = {},
 	}
 end
 
@@ -100,6 +107,9 @@ local function reconcile(data: any): Profile
 	end
 	return d
 end
+
+-- Exposed for the migration test in DevTest (old-format save -> current Profile).
+DataService.reconcile = reconcile
 
 function DataService.load(player: Player): Profile
 	local profile = defaultProfile()

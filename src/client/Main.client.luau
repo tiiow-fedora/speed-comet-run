@@ -240,6 +240,10 @@ remotes.Notify.OnClientEvent:Connect(function(kind: string, text: string, extra:
 			task.spawn(faceCamera, player.Character)
 		end
 		Hud.toast(text, Theme.Accent)
+	elseif kind == "quest" then
+		Sfx.play("gate")
+		Hud.toast(text, Color3.fromRGB(255, 170, 90))
+		Hud.pulse("Quests")
 	elseif kind == "welcome" then
 		Sfx.play("buy")
 		Hud.toast(text, Theme.Green)

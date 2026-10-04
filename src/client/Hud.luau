@@ -2,6 +2,7 @@
 -- HUD, side buttons, panels (Shop, Rebirth, Store, Daily), toasts and hint banner.
 -- Mobile-friendly: everything sized in offsets on a 1000x600 reference, scaled by UIScale.
 
+local HttpService = game:GetService("HttpService")
 local MarketplaceService = game:GetService("MarketplaceService")
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -386,6 +387,59 @@ local function buildDaily()
 	end)
 end
 
+local function buildQuests()
+	local _, list = makePanel("Quests", "📜 DAILY QUESTS", Color3.fromRGB(255, 170, 90))
+	local note = Theme.label({
+		Text = "New quests every day. Rewards grow as you reach further stages!",
+		Size = UDim2.new(1, -12, 0, 24),
+		TextColor3 = Theme.Muted,
+		Font = Theme.BodyFont,
+		LayoutOrder = 0,
+		ZIndex = 22,
+		Parent = list,
+	})
+	note.TextWrapped = true
+	local rows = {}
+	for i = 1, 3 do
+		local r = row(list, i, 76)
+		local title = Theme.label({ Size = UDim2.new(1, -200, 0, 28), Position = UDim2.fromOffset(14, 6), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 23, Parent = r })
+		local barBg = new("Frame", { Size = UDim2.new(1, -200, 0, 18), Position = UDim2.fromOffset(14, 40), BackgroundColor3 = Theme.Bg, ZIndex = 23, Parent = r }, { Theme.corner(9) })
+		local fill = new("Frame", { Size = UDim2.fromScale(0, 1), BackgroundColor3 = Theme.Green, ZIndex = 24, Parent = barBg }, { Theme.corner(9) })
+		local prog = Theme.label({ Size = UDim2.new(1, -8, 1, -2), Position = UDim2.fromOffset(4, 1), Font = Theme.BodyFont, ZIndex = 25, Parent = barBg })
+		local b = Theme.button({ Size = UDim2.fromOffset(170, 50), Position = UDim2.new(1, -180, 0, 13), ZIndex = 23, Parent = r })
+		b.Activated:Connect(function()
+			remotes.ClaimQuest:FireServer(i)
+		end)
+		rows[i] = { title = title, fill = fill, prog = prog, button = b, frame = r }
+	end
+	table.insert(refreshers, function()
+		local ok, data = pcall(HttpService.JSONDecode, HttpService, attr("Quests", "[]"))
+		if not ok or type(data) ~= "table" then
+			data = {}
+		end
+		for i, rw in rows do
+			local q = data[i]
+			rw.frame.Visible = q ~= nil
+			if q then
+				rw.title.Text = q.text
+				local frac = math.clamp(q.progress / math.max(q.target, 1), 0, 1)
+				rw.fill.Size = UDim2.fromScale(frac, 1)
+				rw.prog.Text = q.progress .. " / " .. q.target .. (if q.unit ~= "" then " " .. q.unit else "")
+				if q.claimed then
+					rw.button.Text = "DONE ✓"
+					rw.button.BackgroundColor3 = Theme.Muted
+				elseif frac >= 1 then
+					rw.button.Text = "CLAIM 🏆 " .. Format.short(q.reward)
+					rw.button.BackgroundColor3 = Theme.Green
+				else
+					rw.button.Text = "🏆 " .. Format.short(q.reward)
+					rw.button.BackgroundColor3 = Theme.PanelLight
+				end
+			end
+		end
+	end)
+end
+
 -- ===== HUD =====
 
 local function chip(parent: Instance, size: UDim2, pos: UDim2, color: Color3): Frame
@@ -500,6 +554,7 @@ local function buildSide()
 		{ "Store", "💎", "STORE", Theme.Gold },
 		{ "Daily", "🎁", "DAILY", Theme.Green },
 		{ "Restart", "↩️", "RESTART", Color3.fromRGB(120, 200, 255) },
+		{ "Quests", "📜", "QUESTS", Color3.fromRGB(255, 170, 90) },
 		{ "Invite", "👥", "INVITE", Color3.fromRGB(150, 120, 255) },
 		{ "Slow", "🐢", "SLOW: OFF", Color3.fromRGB(140, 220, 140) },
 		{ "Music", "🎵", "MUSIC: ON", Color3.fromRGB(255, 170, 90) },
@@ -688,6 +743,7 @@ local function refreshTop()
 	Hud.setDot("Shop", canBuy)
 	Hud.setDot("Rebirth", speed >= Config.RebirthCost(attr("Rebirths", 0)))
 	Hud.setDot("Daily", attr("DailyReady", false))
+	Hud.setDot("Quests", attr("QuestReady", false))
 	local slowBtn = sideButtons["Slow"]
 	local slowLabel = slowBtn and slowBtn:FindFirstChild("Label") :: TextLabel?
 	if slowLabel then
@@ -763,6 +819,7 @@ function Hud.build()
 	buildRebirth()
 	buildStore()
 	buildDaily()
+	buildQuests()
 
 	local function refreshAll()
 		refreshTop()
@@ -775,7 +832,7 @@ function Hud.build()
 			end
 		end
 	end
-	for _, name in { "Speed", "Gain", "Wins", "Rebirths", "Boot", "OwnedBoots", "PotionLeft", "Checkpoint", "Friends", "DailyReady", "DailyDay", "Pass_Speed2x", "Pass_Wins2x", "Pass_VIP", "Slow" } do
+	for _, name in { "Speed", "Gain", "Wins", "Rebirths", "Boot", "OwnedBoots", "PotionLeft", "Checkpoint", "Friends", "DailyReady", "DailyDay", "Pass_Speed2x", "Pass_Wins2x", "Pass_VIP", "Slow", "Quests", "QuestReady" } do
 		player:GetAttributeChangedSignal(name):Connect(refreshAll)
 	end
 	refreshAll()

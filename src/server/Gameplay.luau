@@ -12,6 +12,7 @@ local DataService = require(script.Parent.DataService)
 local State = require(script.Parent.State)
 local Passes = require(script.Parent.Passes)
 local MapBuilder = require(script.Parent.MapBuilder)
+local Quests = require(script.Parent.Quests)
 
 local Gameplay = {}
 
@@ -200,6 +201,10 @@ local function claimPad(player: Player, p: DataService.Profile, rt: Runtime, st:
 	end
 	State.sync(player)
 	local final = st.Index == #layout.Stages
+	Quests.event(player, "pad", 1)
+	if final then
+		Quests.event(player, "finish", 1)
+	end
 	Gameplay.notify(player, "wins", "+" .. Format.commas(gained) .. " Wins!", { stage = st.Index, final = final })
 	if final then
 		Gameplay.announce(player.DisplayName .. " reached the FINISH! 🏁", player)
@@ -348,6 +353,10 @@ function Gameplay.start(builtLayout: MapBuilder.Layout, notifyRemote: RemoteEven
 					local m = Gameplay.multiplier(player, p)
 					p.Speed += m
 					p.PlaySeconds += 1
+					if p.Speed > p.BestSpeed then
+						p.BestSpeed = p.Speed
+					end
+					Quests.event(player, "play", 1)
 					if p.PotionLeft > 0 then
 						p.PotionLeft = math.max(0, p.PotionLeft - 1)
 					end

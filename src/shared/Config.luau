@@ -67,6 +67,20 @@ function Config.RebirthCost(rebirths: number): number
 	return 2500 * (rebirths + 1)
 end
 
+-- Daily quests (v2). One quest is drawn from each tier per UTC day. Rewards scale
+-- with the player's best stage: Mult x that stage's pad Wins (min 25).
+export type QuestDef = { Id: string, Text: string, Event: string, Target: number, Mult: number, Tier: number }
+Config.QuestPool = {
+	{ Id = "pads15", Text = "Step on 15 Wins pads", Event = "pad", Target = 15, Mult = 2, Tier = 1 },
+	{ Id = "play10", Text = "Play for 10 minutes", Event = "play", Target = 600, Mult = 2, Tier = 1 },
+	{ Id = "restart5", Text = "Restart a lap 5 times", Event = "restart", Target = 5, Mult = 2, Tier = 1 },
+	{ Id = "pads40", Text = "Step on 40 Wins pads", Event = "pad", Target = 40, Mult = 4, Tier = 2 },
+	{ Id = "play25", Text = "Play for 25 minutes", Event = "play", Target = 1500, Mult = 4, Tier = 2 },
+	{ Id = "finish1", Text = "Reach the FINISH", Event = "finish", Target = 1, Mult = 8, Tier = 3 },
+	{ Id = "pads80", Text = "Step on 80 Wins pads", Event = "pad", Target = 80, Mult = 8, Tier = 3 },
+} :: { QuestDef }
+Config.QuestMinBase = 25
+
 Config.FriendBoostPer = 0.10
 Config.FriendBoostMax = 0.30
 Config.DailyWinsPerDay = 25

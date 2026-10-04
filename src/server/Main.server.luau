@@ -9,6 +9,7 @@ local Config = require(ReplicatedStorage.Shared.Config)
 local MapBuilder = require(script.Parent.MapBuilder)
 local PropLoader = require(script.Parent.PropLoader)
 local Leaderboard = require(script.Parent.Leaderboard)
+local Quests = require(script.Parent.Quests)
 local DataService = require(script.Parent.DataService)
 local State = require(script.Parent.State)
 local Passes = require(script.Parent.Passes)
@@ -43,6 +44,7 @@ local claimDaily = remote("ClaimDaily")
 local tutorialDone = remote("TutorialDone")
 local restartLap = remote("RestartLap")
 local setSlow = remote("SetSlow")
+local claimQuest = remote("ClaimQuest")
 remotes.Parent = ReplicatedStorage
 
 local function guarded(name: string, rate: number, fn: (Player, ...any) -> ())
@@ -64,7 +66,9 @@ claimDaily.OnServerEvent:Connect(guarded("ClaimDaily", 1, Shop.claimDaily))
 restartLap.OnServerEvent:Connect(guarded("RestartLap", 0.5, function(player: Player)
 	Gameplay.resetLap(player)
 	Gameplay.teleport(player, layout.SpawnCFrame)
+	Quests.event(player, "restart", 1)
 end))
+claimQuest.OnServerEvent:Connect(guarded("ClaimQuest", 2, Quests.claim))
 setSlow.OnServerEvent:Connect(guarded("SetSlow", 2, function(player: Player, on: any)
 	Gameplay.setSlow(player, on == true)
 end))
@@ -77,6 +81,7 @@ tutorialDone.OnServerEvent:Connect(guarded("TutorialDone", 1, function(player: P
 end))
 
 Gameplay.start(layout, notify)
+Quests.setNotify(Gameplay.notify)
 Monetization.start()
 
 local function onPlayerAdded(player: Player)
@@ -92,6 +97,11 @@ local function onPlayerAdded(player: Player)
 	Gameplay.addPlayer(player)
 	State.sync(player)
 	Shop.refreshDaily(player)
+	local prof = DataService.get(player)
+	if prof then
+		Quests.ensure(player, prof)
+		Quests.sync(player)
+	end
 	player:SetAttribute("Loaded", true)
 	if firstJoin then
 		task.delay(3, function()
@@ -122,6 +132,7 @@ DataService.start(function(player: Player)
 	local p = DataService.get(player)
 	if p and DataService.isLoaded(player) then
 		Leaderboard.submit(player.UserId, p.TotalWins)
+		Leaderboard.submitTo("TopSpeed", player.UserId, p.BestSpeed)
 	end
 end)
 
