@@ -124,7 +124,14 @@ end)
 if game:GetService("RunService"):IsStudio() then
 	local devRun = Instance.new("BindableFunction")
 	devRun.Name = "DevRun"
-	devRun.OnInvoke = function(what: string?)
+	devRun.OnInvoke = function(what: string?, arg: any?)
+		if what == "tp" then
+			-- legit server teleport (sets anti-cheat grace) to just before gate `arg`
+			local player = Players:GetPlayers()[1]
+			local st = layout.Stages[tonumber(arg) or 1]
+			Gameplay.teleport(player, CFrame.lookAt(Vector3.new(0, Config.TrackY + 4, st.GateZ - 60), Vector3.new(0, Config.TrackY + 4, st.GateZ)))
+			return true
+		end
 		return require(script.Parent.DevTest).run()
 	end
 	devRun.Parent = game:GetService("ServerScriptService")

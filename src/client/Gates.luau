@@ -27,8 +27,8 @@ local function update(wall: BasePart, initial: boolean)
 	opened[wall] = open
 	wall.CanCollide = not open
 	local goal = if open
-		then { Color = Theme.Green, Transparency = 0.75 }
-		else { Color = Theme.Red, Transparency = 0.15 }
+		then { Color = Theme.Green, Transparency = 0.93 }
+		else { Color = Color3.fromRGB(255, 60, 80), Transparency = 0.45 }
 	if initial then
 		wall.Color = goal.Color
 		wall.Transparency = goal.Transparency

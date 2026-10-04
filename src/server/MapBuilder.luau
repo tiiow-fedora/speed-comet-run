@@ -181,11 +181,11 @@ local function gate(z: number, stageIndex: number, req: number, zone: Config.Zon
 	g.Parent = parent
 	local wall = part({
 		Name = "Barrier",
-		Size = Vector3.new(W + 120, 90, 2),
-		CFrame = CFrame.new(0, Y + 15, z),
+		Size = Vector3.new(W + 6, 30, 2),
+		CFrame = CFrame.new(0, Y + 13, z),
 		Color = Color3.fromRGB(255, 70, 90),
-		Material = Enum.Material.ForceField,
-		Transparency = 0.15,
+		Material = Enum.Material.Neon,
+		Transparency = 0.45,
 		CastShadow = false,
 	}, g)
 	wall:SetAttribute("Req", req)

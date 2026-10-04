@@ -39,4 +39,6 @@ The automated part is `src/server/DevTest.luau`. It drives a real player through
 | TutorialDone | nothing | sets a cosmetic flag | 1/s |
 | Notify | server → client only | n/a | n/a |
 
+Live check (00:24): a client-side `Character:PivotTo` jump of ~890 studs from the command bar was caught: `[AntiCheat] tiiow moved 891 studs in 1.1s (allowed 267)`, and the character was rubber-banded back.
+
 Currency and progress never come from the client. Speed is ticked by the server. Wins are paid when the server sees your HumanoidRootPart inside a pad zone, and only if Speed ≥ that stage's requirement. Gate crossings are validated on the server (10 Hz). A 1-second-window horizontal speed check rubber-bands teleport/speed exploits (allowance = 2 × WalkSpeed + 40 studs/s).
