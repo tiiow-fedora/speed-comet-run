@@ -345,8 +345,9 @@ end
 local function lighting()
 	Lighting.ClockTime = 0
 	Lighting.Brightness = 2
-	Lighting.Ambient = Color3.fromRGB(95, 90, 130)
-	Lighting.OutdoorAmbient = Color3.fromRGB(120, 115, 160)
+	Lighting.Ambient = Color3.fromRGB(150, 145, 190)
+	Lighting.OutdoorAmbient = Color3.fromRGB(170, 165, 210)
+	Lighting.ExposureCompensation = 0.4
 	Lighting.EnvironmentDiffuseScale = 0.5
 	Lighting.EnvironmentSpecularScale = 0.5
 	Lighting.FogEnd = 100000

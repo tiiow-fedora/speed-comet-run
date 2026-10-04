@@ -83,6 +83,9 @@ end
 local function hintText(): string?
 	local speed = (player:GetAttribute("Speed") :: number?) or 0
 	local n = Hud.nextStage()
+	if tutorialStep == 1 and speed >= Config.Stages[1].Req then
+		setStep(2)
+	end
 	if tutorialStep == 1 then
 		local req = Config.Stages[1].Req
 		return "Every second you get +⚡ Speed! Reach ⚡" .. req .. " to open the gate (" .. math.min(speed, req) .. "/" .. req .. ")"
@@ -128,6 +131,22 @@ RunService.Heartbeat:Connect(function()
 	Hud.hint(hintText())
 end)
 
+-- point the camera down the track after each spawn/teleport to spawn
+local function faceCamera(char: Model)
+	local hrp = char:WaitForChild("HumanoidRootPart", 10) :: BasePart?
+	if not hrp then
+		return
+	end
+	task.wait(0.35) -- server places the character first
+	local cam = workspace.CurrentCamera
+	local look = hrp.CFrame.LookVector
+	cam.CFrame = CFrame.lookAt(hrp.Position - look * 16 + Vector3.new(0, 7, 0), hrp.Position + look * 10)
+end
+player.CharacterAdded:Connect(faceCamera)
+if player.Character then
+	task.spawn(faceCamera, player.Character)
+end
+
 -- ===== notifications from the server =====
 remotes.Notify.OnClientEvent:Connect(function(kind: string, text: string, extra: any)
 	if kind == "wins" then
@@ -151,9 +170,15 @@ remotes.Notify.OnClientEvent:Connect(function(kind: string, text: string, extra:
 		Hud.toast(text, Theme.Green)
 	elseif kind == "rebirth" then
 		Sfx.play("rebirth")
+		if player.Character then
+			task.spawn(faceCamera, player.Character)
+		end
 		Hud.toast(text, Theme.Pink)
 	elseif kind == "lap" then
 		Sfx.play("lap")
+		if player.Character then
+			task.spawn(faceCamera, player.Character)
+		end
 		Hud.toast(text, Theme.Accent)
 	elseif kind == "daily" then
 		Sfx.play("buy")

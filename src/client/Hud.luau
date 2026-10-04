@@ -7,6 +7,7 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SocialService = game:GetService("SocialService")
 local TweenService = game:GetService("TweenService")
+local UserInputService = game:GetService("UserInputService")
 
 local Config = require(ReplicatedStorage.Shared.Config)
 local Format = require(ReplicatedStorage.Shared.Format)
@@ -88,13 +89,14 @@ local function makePanel(name: string, title: string, accent: Color3): (Frame, S
 	local p = new("Frame", {
 		Name = name .. "Panel",
 		AnchorPoint = Vector2.new(0.5, 0.5),
-		Position = UDim2.fromScale(0.5, 0.52),
-		Size = UDim2.fromOffset(560, 400),
+		Position = UDim2.fromScale(0.5, 0.5),
+		Size = UDim2.new(0, 560, 0.88, 0),
 		BackgroundColor3 = Theme.Panel,
 		Visible = false,
 		ZIndex = 20,
 		Parent = root,
 	})
+	new("UISizeConstraint", { MaxSize = Vector2.new(560, 420), Parent = p })
 	Theme.corner(18).Parent = p
 	Theme.stroke(accent, 3).Parent = p
 	Theme.label({
@@ -459,15 +461,21 @@ local function buildTop()
 end
 
 local function buildSide()
+	-- 2-column grid in the top-left so it never collides with the mobile thumbstick
 	local side = new("Frame", {
 		Name = "Side",
-		AnchorPoint = Vector2.new(0, 0.5),
-		Position = UDim2.new(0, 8, 0.5, -20),
-		Size = UDim2.fromOffset(84, 6 * 84),
+		Position = UDim2.fromOffset(8, 72),
+		Size = UDim2.fromOffset(2 * 76 + 8, 3 * 76 + 16),
 		BackgroundTransparency = 1,
 		Parent = root,
 	})
-	new("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder, Parent = side })
+	new("UIGridLayout", {
+		CellSize = UDim2.fromOffset(72, 72),
+		CellPadding = UDim2.fromOffset(8, 8),
+		FillDirection = Enum.FillDirection.Horizontal,
+		SortOrder = Enum.SortOrder.LayoutOrder,
+		Parent = side,
+	})
 	local defs = {
 		{ "Shop", "👟", "BOOTS", Theme.Accent },
 		{ "Rebirth", "🔁", "REBIRTH", Theme.Pink },
@@ -479,7 +487,7 @@ local function buildSide()
 	for i, d in defs do
 		local b = new("TextButton", {
 			Name = d[1],
-			Size = UDim2.fromOffset(76, 76),
+			Size = UDim2.fromOffset(72, 72),
 			BackgroundColor3 = Theme.Bg,
 			BackgroundTransparency = 0.1,
 			Text = "",
@@ -489,7 +497,7 @@ local function buildSide()
 		})
 		Theme.corner(16).Parent = b
 		Theme.stroke(d[4], 3).Parent = b
-		Theme.label({ Text = d[2], Size = UDim2.new(1, 0, 0, 44), Position = UDim2.fromOffset(0, 4), Parent = b })
+		Theme.label({ Text = d[2], Size = UDim2.new(1, 0, 0, 40), Position = UDim2.fromOffset(0, 4), Parent = b })
 		Theme.label({ Text = d[3], Size = UDim2.new(1, -6, 0, 20), Position = UDim2.new(0, 3, 1, -24), TextColor3 = d[4], Parent = b })
 		local dot = new("Frame", {
 			Name = "Dot",
@@ -640,7 +648,12 @@ local function refreshTop()
 end
 
 local function applyScale(scale: UIScale, v: Vector2)
-	scale.Scale = math.clamp(math.min(v.X / 1000, v.Y / 600), 0.5, 1.4)
+	local s = math.clamp(math.min(v.X / 1000, v.Y / 600), 0.5, 1.4)
+	if UserInputService.TouchEnabled and v.Y < 520 then
+		-- small touch screens: use a smaller reference canvas so text stays readable
+		s = math.min(v.X / 820, v.Y / 470)
+	end
+	scale.Scale = s
 end
 
 function Hud.build()

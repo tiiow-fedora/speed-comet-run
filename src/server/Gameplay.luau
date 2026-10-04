@@ -263,10 +263,9 @@ function Gameplay.onCharacter(player: Player, character: Model)
 	Gameplay.applyWalkSpeed(player, p)
 	task.defer(function()
 		Gameplay.applyTrail(player)
-		if rt.checkpoint > 0 then
-			task.wait(0.1)
-			Gameplay.teleport(player, checkpointCFrame(rt))
-		end
+		-- always place (and face) the character down the track
+		task.wait(0.1)
+		Gameplay.teleport(player, checkpointCFrame(rt))
 	end)
 end
 

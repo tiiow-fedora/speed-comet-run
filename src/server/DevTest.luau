@@ -151,11 +151,16 @@ function DevTest.run()
 			local prod = Config.Products[key]
 			if prod.Id ~= 0 then
 				local id = "devtest-" .. key .. "-" .. os.clock()
-				local before = p.Wins
+				local function snap()
+					return string.format("%.0f|%.0f|%.0f|%d", p.Speed, p.Wins, p.PotionLeft, #p.Receipts)
+				end
+				local before = snap()
 				local d1 = Monetization.processReceipt({ PlayerId = player.UserId, ProductId = prod.Id, PurchaseId = id })
-				local mid = p.Wins
+				local mid = snap()
 				local d2 = Monetization.processReceipt({ PlayerId = player.UserId, ProductId = prod.Id, PurchaseId = id })
-				check("receipt " .. key .. " granted once", d1 == Enum.ProductPurchaseDecision.PurchaseGranted and d2 == Enum.ProductPurchaseDecision.PurchaseGranted and p.Wins == mid, tostring(d1) .. " " .. tostring(d2) .. " " .. (p.Wins - before))
+				local after = snap()
+				local G = Enum.ProductPurchaseDecision.PurchaseGranted
+				check("receipt " .. key .. " granted exactly once", d1 == G and d2 == G and before ~= mid and mid == after, before .. " -> " .. mid .. " -> " .. after)
 			end
 		end
 	end
