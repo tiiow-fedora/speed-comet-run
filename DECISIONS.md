@@ -12,3 +12,6 @@
 - **00:10 Slow-mode toggle** (WalkSpeed cap 45): at high Speed, auto-jumping overshoots islands. This gives skilled-jump control without nerfing the speed fantasy.
 - **00:20 Publishing**: the Open Cloud publish returned `409 Conflict "Server is busy"` 4× while Studio had the Team Create session open. After closing Studio, the first retry succeeded (version 13). Note for the future: close Studio (end the Team Create session) before API publishing.
 - **00:21 Max players 20**: typical for the +1-speed genre. The board is per-player, so crowding isn't an issue.
+- **01:00 Welcome gift** (3x Speed for 2 min on first join): first-session hook. Gate 2 opens in about a minute for new players.
+- **01:05 Server-wide toasts** on finish and rebirth: social proof and a co-play nudge.
+- **01:10 Galaxy 2** (stages 11–15, zone "Event Horizon", +2 boots x64/x128): the report's #1 retention item, added as Config data only, since MapBuilder/gates/HUD/DevTest are driven by Config. Sim: stage 11 at ~82 min free (~52 min with 2x Speed). Stages 13–15 are multi-session goals.
