@@ -24,6 +24,12 @@ The automated part is `src/server/DevTest.luau`. It drives a real player through
   - Device Emulator: iPhone 7 (667×375, the smallest preset), iPad 6th gen (1024×768), and the desktop Studio viewport. Phone pass found two bugs, both fixed and re-checked: side buttons overlapped the thumbstick (moved to a 2-column grid top-left and a right column), and the Store panel was cut off (panel height now adapts with a max size). Screens: `phone_iphone7_hud.jpg`, `phone_iphone7_store.jpg`, `tablet_ipad_1024x768.jpg`, `store_panel.jpg`.
 - [x] **No exploitable remotes**: see the table below. DevTest checks: `bad boot args ignored` (99, 1.5, "2"), `equip unowned rejected`, `boot rejected when poor`, `rebirth rejected when slow`, `gate1/gate5 rejects` (server teleports back anyone past a gate without the Speed).
 
+## Live game (Roblox client, after publishing and going public)
+- [x] v16, 00:47: joined with `roblox://placeId=111550268150564`. The game loaded with saved progress (same DataStore as Studio), the leaderboard showed "tiiow — 30", and the server console (F9 → Server) had only the `server ready` line.
+- Bug found live: on desktop the Roblox chat window opens top-left, over the left button grid, and takes the clicks. Fixed in v18: the desktop grid now starts at y=236, below the chat. Touch devices keep the top position because chat is collapsed and the thumbstick owns the bottom-left. Re-checked live on v18: Store opens.
+- [x] v18, 00:53: tapped Speed Burst R$25 → the real Roblox "Buy item" prompt appeared with the product icon and price 25. **Closed without buying.** Screen: `tests/screens/live_purchase_prompt_cancelled.jpg`, `live_client_join_v18.jpg`.
+- Daily reward: in Studio, the real UI click on CLAIM gave +25 Wins and the toast "Day 1 reward: +25 Wins". DevTest adds `daily ready attr`, `daily pays day 1`, `daily second claim rejected` (DevTest now 30/30, 00:50).
+
 ## Multiplayer
 - [x] 2-client local server (Test → Server and Clients → Add Clients ×2): both players load independent profiles (Player1 107 Speed, Player2 62 Speed). DevTest driving Player1 left Player2 untouched (62 → 87 from normal ticks). 27/27 PASS. Log: `tests/devtest_2player_localserver.log`.
 

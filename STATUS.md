@@ -29,17 +29,12 @@ Note: Creator Hub showed an "Unrestricted Experience Access" warning on save —
 
 **All needed capabilities confirmed. Proceeding to Phase 1.**
 
-## Current phase (updated 2026-10-04 00:08)
-Phase 3/4 overlap: build done, testing in progress.
+## Current phase (updated 2026-10-04 00:56)
+Phase 5 done → Phase 6 (report) + extra QA.
 
-Works (verified in Studio):
-- Core loop: speed tick, gates (client-local open + server validation), wins pads, laps, restart-lap, falling/checkpoints
-- Data saving: DataStore with retries + UpdateAsync + session lock; save/load across rejoin verified (674 → 739)
-- HUD, Boots shop, Rebirth, Store, Daily reward, Invite button, onboarding hints + guide beam
-- Monetization: 3 passes + 5 products created via Open Cloud; ProcessReceipt grant-once verified by DevTest and by a Studio test purchase
-- Blender props (4 meshes) + 6 synthesized SFX uploaded via Open Cloud
-- DevTest 27/27 in Play and with 2 clients on a local server
-- Phone (iPhone 7 667x375) / tablet (iPad 1024x768) layouts checked with the Device Emulator
-
-In progress: 10-minute Play session, icon (Blender render done), thumbnails, publish.
+- Published: place version 18 (Open Cloud). Experience is **PUBLIC**. Content maturity questionnaire done: label **Minimal**.
+- Creator Hub reach: a new experience is limited to "16+ users and trusted friends" until enough highly engaged players, or until a refundable publishing fee / 50,000 R$ expedited review is paid. Not paid (no spending allowed); see MORNING_REPORT.
+- Icon approved. 3 homepage thumbnails approved and active (Thumbnail Personalization API). Experience Detail Page thumbnail upload through Creator Hub could not be confirmed.
+- Genre: Simulation › Incremental Simulator. Max players 20. Description set.
+- DevTest 30/30. 10-minute clean session. Live client join + real purchase prompt (cancelled) verified.
 Blocked: nothing.
