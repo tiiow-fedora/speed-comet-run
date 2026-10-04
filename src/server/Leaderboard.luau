@@ -36,8 +36,8 @@ function Leaderboard.build(parent: Instance)
 	board.Name = "TopRunnersBoard"
 	board.Anchored = true
 	board.Size = Vector3.new(22, 26, 1)
-	-- left of the spawn, angled toward players walking out of the spawn
-	board.CFrame = CFrame.new(-(W / 2 + 16), Y + 13, 15) * CFrame.Angles(0, math.rad(-25), 0)
+	-- beside the spawn (opposite the zone sign), angled toward players leaving the spawn
+	board.CFrame = CFrame.new(W / 2 + 18, Y + 13, 12) * CFrame.Angles(0, math.rad(40), 0) -- +X is screen-left when facing +Z
 	board.Color = Color3.fromRGB(20, 22, 48)
 	board.Material = Enum.Material.SmoothPlastic
 	board.Parent = parent
