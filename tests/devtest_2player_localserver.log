@@ -1,0 +1,10 @@
+Studio "Server and Clients" local test, 2 clients added via Test > Add Clients (2026-10-04 00:03)
+00:03:21.733  PLAYER Player1 -1 true 107  -  Server
+00:03:21.733  PLAYER Player2 -2 true 62  -  Server
+00:03:21.733  COUNT 2  -  Server
+00:03:33.662  > game.ServerScriptService.DevRun:Invoke()   (drives Player1 only)
+... 27 PASS lines (same checks as devtest_run1 + 5 receipt "granted exactly once" checks)
+00:03:46.484  DEVTEST DONE: 27 pass, 0 fail
+00:03:46.489  AFTER Player1 119 0     (restored by the test)
+00:03:46.489  AFTER Player2 87 0      (untouched: 62 + ~25 s of ticks)
+No errors or warnings from game scripts in the server Output during the session.
