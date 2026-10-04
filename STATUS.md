@@ -29,5 +29,17 @@ Note: Creator Hub showed an "Unrestricted Experience Access" warning on save —
 
 **All needed capabilities confirmed. Proceeding to Phase 1.**
 
-## Current phase
-Phase 1 Research (started ~23:20)
+## Current phase (updated 2026-10-04 00:08)
+Phase 3/4 overlap: build done, testing in progress.
+
+Works (verified in Studio):
+- Core loop: speed tick, gates (client-local open + server validation), wins pads, laps, restart-lap, falling/checkpoints
+- Data saving: DataStore with retries + UpdateAsync + session lock; save/load across rejoin verified (674 → 739)
+- HUD, Boots shop, Rebirth, Store, Daily reward, Invite button, onboarding hints + guide beam
+- Monetization: 3 passes + 5 products created via Open Cloud; ProcessReceipt grant-once verified by DevTest and by a Studio test purchase
+- Blender props (4 meshes) + 6 synthesized SFX uploaded via Open Cloud
+- DevTest 27/27 in Play and with 2 clients on a local server
+- Phone (iPhone 7 667x375) / tablet (iPad 1024x768) layouts checked with the Device Emulator
+
+In progress: 10-minute Play session, icon (Blender render done), thumbnails, publish.
+Blocked: nothing.
