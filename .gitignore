@@ -10,3 +10,6 @@ audio/out/
 art/out/
 
 !backup/*.rbxl
+promo/raw/
+promo/tmp/
+promo/out/
