@@ -28,3 +28,10 @@ YouTube Shorts title: `Every second = +1 Speed ⚡ (my Roblox game)`. Put the ga
 Title: `My first Roblox game: a +1 Speed runner in space. Feedback on the first minute?`
 > I made a +1 Speed game where you run along a floating track through 6 space zones, grab Comet Shards for instant speed and break through gates. I'd love honest feedback on the first 60 seconds: is it clear what to do, and where did you stop playing?
 > https://www.roblox.com/games/111550268150564/
+
+## Music versions (built by `add_music.py`)
+`out/comet_run_hype_{vertical,16x9}_{gym,sport}.mp4`: the hype edit plus phonk under the SFX (the music ducks when an effect hits and fades out on the end card).
+- "Gym Phonk" by Sub_Clair: https://pixabay.com/music/phonk-gym-phonk-571899/
+- "Sport Phonk" by Sub_Clair: https://pixabay.com/music/phonk-sport-phonk-571905/
+
+Both are under the Pixabay Content License (free, commercial and social use OK, no credit required) and were **not** Content ID registered when checked on 2026-10-04; most Pixabay phonk is registered, so these were picked on purpose. The MP3s sit in `promo/music/` (not in git). Optional credit line: `Music: Sub_Clair (Pixabay)`.
