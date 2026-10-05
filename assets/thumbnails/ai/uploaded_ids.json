@@ -1,0 +1,10 @@
+{
+ "homepage_active_2026-10-04": {
+  "personalization_config": "68a294c0-2adf-4e8e-868a-aea17819ddc9",
+  "thumb_ai_a_gate_nolock.jpg": {"homepageThumbnailId": "e2d98d44-2061-4f06-9e42-f9e1340067f4", "assetId": 134184834947853},
+  "thumb_ai_b_leap.jpg": {"homepageThumbnailId": "e711d053-cf2d-408a-8775-fc6b92a3a5c7", "assetId": 97019806639451},
+  "thumb_ai_c_race.jpg": {"homepageThumbnailId": "a1ce459f-1962-48f8-aa27-627b9d080c07", "assetId": 95764993723539},
+  "thumb_ai_d_logo.jpg": {"homepageThumbnailId": "31115391-4b3f-421d-a791-9f6357d0af07", "assetId": 110439673640974}
+ },
+ "previous_set_run3_now_inactive": ["8e503cff-565c-4279-bf3c-94cbbb81aadc", "b3842bcc-b81c-4906-adf5-2de24abc1afe", "4dd0d822-4d15-4699-8d79-41d8769d974b"]
+}
