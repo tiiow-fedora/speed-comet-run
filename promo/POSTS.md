@@ -4,7 +4,9 @@ Videos (real gameplay, recorded 2026-10-04 from the live game; built by `make_pr
 - `out/comet_run_vertical.mp4`: 1080x1920, 24 s, for TikTok / YouTube Shorts / Instagram Reels
 - `out/comet_run_16x9.mp4`: 1920x1080, 24 s, for X/Twitter and YouTube
 
-Both are silent (screen capture has no game audio). On TikTok/Shorts, add a trending sound in the app before posting; it helps reach a lot.
+Both are silent (screen capture has no game audio).
+
+**Hype edits (recommended, built by `make_hype.py`):** `out/comet_run_hype_vertical.mp4` and `out/comet_run_hype_16x9.mp4`, 19.5 s, with speed ramps, punch zooms, shake, flashes, RGB split, word-pop captions and a logo-slam ending. Over-the-top sound effects, no music. Every sound is synthesized in the script (booms, whooshes, risers, bass drop, air-horn-style chord, blings), plus the game's own `wins`/`gate` sounds from `audio/out/`, so there are no copyright issues.
 
 Game link: https://www.roblox.com/games/111550268150564/
 
