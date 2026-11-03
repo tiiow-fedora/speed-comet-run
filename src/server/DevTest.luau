@@ -16,6 +16,8 @@ local Gameplay = require(script.Parent.Gameplay)
 local Shop = require(script.Parent.Shop)
 local Monetization = require(script.Parent.Monetization)
 local Quests = require(script.Parent.Quests)
+local Goal = require(script.Parent.Goal)
+local Gifts = require(script.Parent.Gifts)
 
 local DevTest = {}
 
@@ -28,6 +30,8 @@ function DevTest.run()
 	backup.Boots = table.clone(p.Boots)
 	backup.Receipts = table.clone(p.Receipts)
 	backup.Quests = table.clone(p.Quests)
+	backup.Pets = table.clone(p.Pets)
+	backup.GiftClaims = table.clone(p.GiftClaims)
 	local layout = Gameplay.layout()
 	local results = { pass = 0, fail = 0 }
 	local function check(name: string, cond: boolean, detail: any?)
@@ -296,6 +300,245 @@ function DevTest.run()
 	RS:SetAttribute("ForceEvent", 2)
 	check("Quest Bonus doubles quest reward", qBonus == 2 * Quests.reward(p, qd), qBonus)
 	RS:SetAttribute("ForceEvent", nil)
+
+	-- 17. v4 companions: fixed price, bonus applied to the Speed multiplier, bad input ignored
+	do
+		local comps = Config.Companions
+		local ascending = #comps >= 4
+		for i = 2, #comps do
+			ascending = ascending and comps[i].Cost > comps[i - 1].Cost and comps[i].Bonus > comps[i - 1].Bonus
+		end
+		check("companions: prices and bonuses ascend", ascending)
+		Goal.resetForTest()
+		p.Pets = {}
+		p.Pet = 0
+		p.Wins = 10
+		local m0 = Gameplay.multiplier(player, p)
+		Shop.buyPet(player, 1)
+		check("pet rejected when poor", p.Pet == 0 and not p.Pets["1"] and p.Wins == 10)
+		p.Wins = comps[1].Cost + 25
+		Shop.buyPet(player, 1)
+		check("pet bought + equipped", p.Pet == 1 and p.Pets["1"] == true and p.Wins == 25, p.Wins)
+		check("pet attrs synced", player:GetAttribute("Pet") == 1 and player:GetAttribute("OwnedPets") == "1")
+		check("pet bonus multiplies Speed gain", math.abs(Gameplay.multiplier(player, p) - m0 * (1 + comps[1].Bonus)) < 1e-6)
+		Shop.buyPet(player, 1)
+		check("owned pet is not charged twice", p.Wins == 25)
+		Shop.buyPet(player, 99)
+		Shop.buyPet(player, 0)
+		Shop.buyPet(player, 1.5)
+		Shop.buyPet(player, "2")
+		Shop.buyPet(player, -1)
+		Shop.equipPet(player, 3)
+		check("bad pet args and unowned equip ignored", p.Pet == 1 and not p.Pets["2"] and not p.Pets["3"] and p.Wins == 25)
+		Shop.equipPet(player, 0)
+		check("pet can be unequipped", p.Pet == 0 and math.abs(Gameplay.multiplier(player, p) - m0) < 1e-6)
+		Shop.equipPet(player, 1)
+		check("pet can be re-equipped", p.Pet == 1)
+		-- client model builder (pure instance creation, safe to run on the server)
+		local okPets, PetsMod = pcall(function()
+			return require((game:GetService("StarterPlayer").StarterPlayerScripts :: any).Client.Pets)
+		end)
+		check("client Pets module loads", okPets)
+		if okPets then
+			local allOk = true
+			for i = 1, #comps do
+				local mdl = (PetsMod :: any).build(i) :: Model
+				local n = 0
+				for _, d in mdl:GetDescendants() do
+					if d:IsA("BasePart") then
+						n += 1
+						if d.CanCollide or d.CanTouch or d.CanQuery then
+							allOk = false
+						end
+					end
+				end
+				allOk = allOk and mdl.PrimaryPart ~= nil and n >= 6
+				mdl:Destroy()
+			end
+			check("every companion model builds (>= 6 parts, no collision)", allOk)
+		end
+		p.Pet = 0
+	end
+
+	-- 18. v4 server shard goal: shared bar, boost on completion, boost not stacked, resets cleanly
+	do
+		Goal.resetForTest()
+		local target = Goal.target()
+		check("goal target for the test server", target == Config.GoalTarget(#Players:GetPlayers()) and target >= Config.Goal.BaseTarget, target)
+		check("goal target scales with players", Config.GoalTarget(3) == Config.Goal.BaseTarget + 2 * Config.Goal.PerPlayer and Config.GoalTarget(500) == Config.Goal.MaxTarget)
+		local mBefore = Gameplay.multiplier(player, p)
+		for _ = 1, target - 1 do
+			Goal.add(1)
+		end
+		check("goal not complete one shard early", not Goal.boostActive() and Goal.progress() == target - 1)
+		check("goal attrs replicate", game:GetService("ReplicatedStorage"):GetAttribute("GoalProgress") == target - 1 and game:GetService("ReplicatedStorage"):GetAttribute("GoalTarget") == target)
+		Goal.add(1)
+		check("goal completes -> boost active", Goal.boostActive() and Goal.progress() == 0 and Goal.triggers() >= 1)
+		check("goal boost multiplies gain", math.abs(Gameplay.multiplier(player, p) - mBefore * Config.Goal.BoostMult) < 1e-6)
+		Goal.add(5)
+		check("shards during boost are not counted", Goal.progress() == 0)
+		Goal.resetForTest()
+		check("goal reset", not Goal.boostActive() and math.abs(Gameplay.multiplier(player, p) - mBefore) < 1e-6)
+	end
+
+	-- 19. v4 quests: shard/boots/rebirth events, MinStage filtering, Daily Trio bonus + streak
+	do
+		p.BestStage = 0
+		local leaked = 0
+		for day = 20000, 20059 do
+			Quests.ensure(player, p, day)
+			for _, q in p.Quests do
+				local d = Quests.def(q.Id)
+				if d and d.MinStage and d.MinStage > 0 then
+					leaked += 1
+				end
+			end
+		end
+		check("new players never get quests that need later stages", leaked == 0, leaked)
+		p.BestStage = 15
+		local sawLate = false
+		for day = 20000, 20059 do
+			Quests.ensure(player, p, day)
+			for _, q in p.Quests do
+				local d = Quests.def(q.Id)
+				if d and d.MinStage and d.MinStage >= 5 then
+					sawLate = true
+				end
+			end
+		end
+		check("late-game quests do appear for advanced players", sawLate)
+		local tiersOk = true
+		for _, q in Config.QuestPool do
+			if q.Tier < 1 or q.Tier > 3 then
+				tiersOk = false
+			end
+		end
+		for tier = 1, 3 do
+			local n = 0
+			for _, q in Config.QuestPool do
+				if q.Tier == tier and q.MinStage == nil then
+					n += 1
+				end
+			end
+			tiersOk = tiersOk and n >= 1 -- every tier keeps at least one quest anyone can do
+		end
+		check("every quest tier has a quest with no stage requirement", tiersOk)
+		p.BestStage = 3
+		p.QuestDay = Quests.today()
+		p.Quests = { { Id = "shards20", P = 0, C = false }, { Id = "newboots", P = 0, C = false }, { Id = "shards100", P = 0, C = false } }
+		for _ = 1, 20 do
+			Quests.event(player, "shard", 1)
+		end
+		check("shard quests progress together", p.Quests[1].P == 20 and p.Quests[3].P == 20, p.Quests[3].P)
+		p.Wins = 1e6
+		p.Boots = { ["1"] = true }
+		p.Boot = 1
+		Shop.buyBoot(player, 2)
+		check("buying boots progresses the boots quest", p.Quests[2].P == 1)
+		Quests.event(player, "shard", 80)
+		-- trio: claim all three; first completion starts a streak
+		p.TrioDay = 0
+		p.TrioStreak = 0
+		Quests.claim(player, 1)
+		Quests.claim(player, 2)
+		local wTrio = p.Wins
+		local bestReward = Quests.reward(p, Quests.def("shards100") :: any)
+		Quests.claim(player, 3)
+		local gotTrio = p.Wins - wTrio
+		check("Daily Trio pays reward + bonus", gotTrio == bestReward + bestReward * Config.TrioMult, gotTrio)
+		check("Daily Trio starts a streak", p.TrioStreak == 1 and p.TrioDay == Quests.today() and player:GetAttribute("TrioDone") == true)
+		local wAgain = p.Wins
+		Quests.checkTrio(player, p)
+		check("Daily Trio only once per day", p.Wins == wAgain)
+		-- streak continues from yesterday and the 7th day gives a potion
+		p.TrioDay = Quests.today() - 1
+		p.TrioStreak = Config.TrioStreakDays - 1
+		p.Quests = { { Id = "pads15", P = 15, C = true }, { Id = "play25", P = 1500, C = true }, { Id = "shards100", P = 100, C = false } }
+		local potion0 = p.PotionLeft
+		Quests.claim(player, 3)
+		check("7-day Trio streak gives a potion", p.TrioStreak == Config.TrioStreakDays and p.PotionLeft >= potion0 + Config.PotionSeconds - 2, p.PotionLeft - potion0)
+		-- a missed day restarts the streak
+		p.TrioDay = Quests.today() - 3
+		p.TrioStreak = 5
+		p.Quests = { { Id = "pads15", P = 15, C = true }, { Id = "play25", P = 1500, C = true }, { Id = "shards100", P = 100, C = false } }
+		Quests.claim(player, 3)
+		check("missed day restarts the Trio streak", p.TrioStreak == 1, p.TrioStreak)
+	end
+
+	-- 20. v4 playtime gifts: unlock by minutes played today, claim once, persist across rejoin, reset next UTC day
+	do
+		local today = Quests.today()
+		p.BestStage = 3
+		p.GiftDay = today
+		p.GiftSeconds = 100
+		p.GiftClaims = {}
+		Gifts.sync(player)
+		check("gift not ready too early", player:GetAttribute("GiftReady") == false)
+		local gw0 = p.Wins
+		Gifts.claim(player, 1)
+		check("early gift claim rejected", p.Wins == gw0 and not p.GiftClaims["1"])
+		p.GiftSeconds = Config.Gifts[1].Minutes * 60 + 5
+		Gifts.sync(player)
+		check("gift becomes ready", player:GetAttribute("GiftReady") == true)
+		Gifts.claim(player, 1)
+		check("gift pays the quest-scale reward", p.Wins == gw0 + Quests.winsFor(p, Config.Gifts[1].Mult) and p.GiftClaims["1"] == true, p.Wins - gw0)
+		local gw1 = p.Wins
+		Gifts.claim(player, 1)
+		Gifts.claim(player, 2)
+		Gifts.claim(player, 0)
+		Gifts.claim(player, 99)
+		Gifts.claim(player, "1")
+		Gifts.claim(player, 1.5)
+		check("double/locked/bad gift claims ignored", p.Wins == gw1)
+		check("gift attrs synced", player:GetAttribute("GiftClaimed") == "1" and player:GetAttribute("GiftReady") == false)
+		p.GiftSeconds = 60 * 60 + 1
+		local pot = p.PotionLeft
+		Gifts.claim(player, #Config.Gifts)
+		check("top gift also grants a potion", p.PotionLeft >= pot + Config.Gifts[#Config.Gifts].PotionSeconds - 2, p.PotionLeft - pot)
+		p.GiftDay = today - 1
+		Gifts.sync(player)
+		check("gifts reset on a new UTC day", p.GiftDay == today and p.GiftSeconds == 0 and next(p.GiftClaims) == nil)
+		local s0 = p.GiftSeconds
+		task.wait(2.1)
+		check("gift timer ticks with play time", p.GiftSeconds >= s0 + 1, p.GiftSeconds)
+	end
+
+	-- 21. v4 migration + scenery + zone ambience
+	do
+		local m4 = DataService.reconcile({ Speed = 5, Boots = { ["1"] = true }, Quests = {}, BestSpeed = 3 })
+		check("migration adds v4 defaults", m4.Pet == 0 and next(m4.Pets) == nil and m4.GiftSeconds == 0 and next(m4.GiftClaims) == nil and m4.TrioStreak == 0 and m4.TrioDay == 0)
+		local junk4 = DataService.reconcile({ Pet = "cat", Pets = 3, GiftClaims = "x", TrioStreak = {} })
+		check("migration rejects wrong v4 types", junk4.Pet == 0 and type(junk4.Pets) == "table" and type(junk4.GiftClaims) == "table" and junk4.TrioStreak == 0)
+		local kept = DataService.reconcile({ Pet = 2, Pets = { ["1"] = true, ["2"] = true }, TrioStreak = 4, GiftSeconds = 77 })
+		check("migration keeps v4 values", kept.Pet == 2 and kept.Pets["2"] == true and kept.TrioStreak == 4 and kept.GiftSeconds == 77)
+		local clouds, lanterns, flags = 0, 0, 0
+		for _, d in workspace.Map.Decor:GetChildren() do
+			if d.Name == "Cloud" then
+				clouds += 1
+			elseif d.Name == "Lantern" then
+				lanterns += 1
+			elseif d.Name == "PennantFlag" then
+				flags += 1
+			end
+		end
+		check("v4 scenery built (clouds, lanterns, 2 flags per stage)", clouds >= #Config.Stages * 5 and lanterns >= #Config.Stages * 6 and flags == #Config.Stages * 2, clouds .. "/" .. lanterns .. "/" .. flags)
+		check("scenery stays under the part budget", (layout.PartCount or 0) < 3000, layout.PartCount)
+		check("one sky tint per zone", #Config.ZoneSky == #Config.Zones)
+		local okAmb, Amb = pcall(function()
+			return require((game:GetService("StarterPlayer").StarterPlayerScripts :: any).Client.Ambience)
+		end)
+		check("client Ambience module loads", okAmb)
+		if okAmb then
+			local zs = {}
+			for _, st in layout.Stages do
+				zs[st.Index] = st.GateZ
+			end
+			local z1 = (Amb :: any).zoneAtZ(zs, 0)
+			local zLast = (Amb :: any).zoneAtZ(zs, layout.EndZ)
+			local zMid = (Amb :: any).zoneAtZ(zs, layout.Stages[3].PadZ)
+			check("zone lookup by Z", z1 == 1 and zLast == Config.Stages[#Config.Stages].Zone and zMid == Config.Stages[3].Zone, z1 .. "," .. zMid .. "," .. zLast)
+		end
+	end
 
 	-- restore
 	for k, v in backup do
