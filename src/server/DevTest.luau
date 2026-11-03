@@ -86,9 +86,10 @@ function DevTest.run()
 	-- 2. pad pays with enough speed
 	p.Speed = s1.Req + 1
 	local w0 = p.Wins
+	local firstClear1 = s1.Index > p.BestStage
 	tp(s1.PadZ)
 	task.wait(0.6)
-	check("pad1 pays wins", p.Wins == w0 + math.floor(s1.Wins * Gameplay.winsMultiplier(player)), p.Wins - w0)
+	check("pad1 pays wins (+ first-clear bonus once)", p.Wins == w0 + math.floor(s1.Wins * Gameplay.winsMultiplier(player)) + (if firstClear1 then s1.Wins else 0), p.Wins - w0)
 	check("checkpoint=1", (Gameplay.runtime(player) :: any).checkpoint == 1)
 	-- 3. no double claim
 	local w1 = p.Wins

@@ -166,6 +166,8 @@ Config.ZoneSky = {
 	{ Haze = Color3.fromRGB(120, 100, 255), Decay = Color3.fromRGB(255, 160, 90), Ambient = Color3.fromRGB(140, 130, 200) }, -- Event Horizon
 } :: { ZoneSky }
 
+-- Roblox Premium members get a small free perk (a documented, allowed use of Premium); it is not a purchase in this game.
+Config.PremiumMult = 1.1
 Config.FriendBoostPer = 0.10
 Config.FriendBoostMax = 0.30
 Config.DailyWinsPerDay = 25

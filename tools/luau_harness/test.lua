@@ -121,8 +121,45 @@ local test = function()
 	M.advance(Config.Goal.BoostSeconds + 2)
 	check("boost expires", not Goal.boostActive())
 
-	-- second player changes the goal target
+	-- first-clear bonus: pad pays base once more the very first time a stage is cleared
+	local rt1 = Gameplay.runtime(p1)
+	rt1.grace = math.huge
+	prof.BestStage = 0; prof.Speed = Config.Stages[1].Req + 1
+	local wc = prof.Wins
+	hrp1.Position = Vector3.new(0, 204, stages[1].PadZ)
+	M.advance(0.3)
+	local baseWins = math.floor(stages[1].Wins * Gameplay.winsMultiplier(p1))
+	check("first clear pays pad + one-time bonus", prof.Wins - wc == baseWins + stages[1].Wins and prof.BestStage == 1, prof.Wins - wc)
+	Gameplay.resetLap(p1)
+	wc = prof.Wins
+	hrp1.Position = Vector3.new(0, 204, stages[1].PadZ - 40); M.advance(0.2)
+	hrp1.Position = Vector3.new(0, 204, stages[1].PadZ); M.advance(0.3)
+	check("second clear pays the base only", prof.Wins - wc == baseWins, prof.Wins - wc)
+	Gameplay.resetLap(p1)
+	hrp1.Position = Vector3.new(0, 204, 0); M.advance(0.2)
+
+	-- Roblox Premium perk (free, small)
+	prof.Speed = 0
+	M.advance(3)
+	local noPrem = prof.Speed / 3
+	p1.MembershipType = M.globals.Enum.MembershipType.Premium
+	prof.Speed = 0
+	M.advance(3)
+	check("Premium members get +10% gain", math.abs((prof.Speed / 3) / noPrem - Config.PremiumMult) < 0.02, (prof.Speed / 3) / noPrem)
+	p1.MembershipType = nil
+
+	-- second player changes the goal target (and they are friends: both get a toast)
+	p1.IsFriendsWith = function() return true end
+	local firedBeforeJoin = #M.fired
 	local p2 = join("Bob")
+	p2.IsFriendsWith = function() return true end
+	M.advance(0.1)
+	local friendToast = false
+	for i = firedBeforeJoin + 1, #M.fired do
+		local f = M.fired[i]
+		if f.remote == "Notify" and f.player == p1 and f.args[1] == "announce" and string.find(f.args[2], "friend") then friendToast = true end
+	end
+	check("friend joining shows a boost toast", friendToast)
 	check("goal target scales with 2 players", RS:GetAttribute("GoalTarget") == Config.GoalTarget(2), RS:GetAttribute("GoalTarget"))
 
 	-- gifts: unlock by play time through the real tick

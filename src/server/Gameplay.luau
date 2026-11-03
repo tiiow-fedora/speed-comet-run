@@ -94,6 +94,9 @@ function Gameplay.multiplier(player: Player, p: DataService.Profile): number
 		m *= 1 + pet.Bonus
 	end
 	m *= Goal.multiplier()
+	if player.MembershipType == Enum.MembershipType.Premium then
+		m *= Config.PremiumMult
+	end
 	return m
 end
 
@@ -199,8 +202,13 @@ end
 local function refreshFriends()
 	for player, rt in runtime do
 		task.spawn(function()
+			local before = rt.friends
 			rt.friends = countFriends(player)
 			player:SetAttribute("Friends", rt.friends)
+			if rt.friends > before then
+				local pct = math.floor(math.min(rt.friends * Config.FriendBoostPer, Config.FriendBoostMax) * 100)
+				Gameplay.notify(player, "announce", "👥 " .. rt.friends .. " friend(s) here! +" .. pct .. "% Speed gain")
+			end
 		end)
 	end
 end
@@ -210,6 +218,11 @@ local function claimPad(player: Player, p: DataService.Profile, rt: Runtime, st:
 	rt.checkpoint = st.Index
 	player:SetAttribute("Checkpoint", st.Index)
 	local gained = math.floor(st.Wins * Gameplay.winsMultiplier(player))
+	-- v4: the first time a stage is ever cleared pays a one-time bonus equal to the pad's base Wins
+	local firstClear = st.Index > p.BestStage
+	if firstClear then
+		gained += st.Wins
+	end
 	p.Wins += gained
 	p.TotalWins += gained
 	if st.Index > p.BestStage then
@@ -222,6 +235,9 @@ local function claimPad(player: Player, p: DataService.Profile, rt: Runtime, st:
 		Quests.event(player, "finish", 1)
 	end
 	Gameplay.notify(player, "wins", "+" .. Format.commas(gained) .. " Wins!", { stage = st.Index, final = final })
+	if firstClear then
+		Gameplay.notify(player, "buy", "NEW STAGE " .. st.Index .. "! First-clear bonus included")
+	end
 	if final then
 		Gameplay.announce(player.DisplayName .. " reached the FINISH! 🏁", player)
 		rt.finishing = true
@@ -341,6 +357,7 @@ function Gameplay.addPlayer(player: Player)
 		shards = {},
 	}
 	player:SetAttribute("Checkpoint", 0)
+	player:SetAttribute("Premium", player.MembershipType == Enum.MembershipType.Premium)
 	refreshFriends()
 	Goal.refresh()
 end

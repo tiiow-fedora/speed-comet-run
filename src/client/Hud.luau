@@ -1070,6 +1070,9 @@ local function refreshTop()
 			Color3.fromRGB(120, 255, 240),
 		})
 	end
+	if attr("Premium", false) then
+		table.insert(boosts, { "💎 Premium +" .. math.floor((Config.PremiumMult - 1) * 100) .. "%", Color3.fromRGB(150, 220, 255) })
+	end
 	local friends = attr("Friends", 0)
 	if friends > 0 then
 		table.insert(boosts, { "👥 +" .. math.floor(math.min(friends * Config.FriendBoostPer, Config.FriendBoostMax) * 100) .. "% friends", Theme.Accent })
