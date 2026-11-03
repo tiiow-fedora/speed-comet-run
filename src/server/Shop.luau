@@ -136,7 +136,7 @@ function Shop.rebirth(player: Player)
 	Gameplay.teleport(player, Gameplay.layout().SpawnCFrame)
 	Quests.event(player, "rebirth", 1)
 	Gameplay.announce(player.DisplayName .. " just reached Rebirth " .. p.Rebirths .. "! 🔁", player)
-	local msg = "Rebirth " .. p.Rebirths .. "! Speed gain is now x" .. Format.short((1 + p.Rebirths) * Config.StarMult(p.Rebirths)) .. " from rebirths"
+	local msg = "Rebirth " .. p.Rebirths .. "! Speed gain is now x" .. Format.mult((1 + p.Rebirths) * Config.StarMult(p.Rebirths)) .. " from rebirths"
 	if p.Rebirths > 0 and Config.HeadStart(p.Rebirths) > 0 then
 		msg ..= ". Head start: ⚡" .. Format.short(Config.HeadStart(p.Rebirths))
 	end

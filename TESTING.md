@@ -120,3 +120,35 @@ The mock does not simulate physics, rendering, layout, real DataStores, Marketpl
 | ClaimGift | gift index | integer 1..#Gifts, unlocked by saved play seconds today, not yet claimed | 3/s |
 
 Everything else the client sees (Pet, OwnedPets, GiftSec, GiftReady, GiftClaimed, TrioDone, TrioStreak, Premium, and the ReplicatedStorage attributes GoalProgress/GoalTarget/GoalBoostEnds) is display-only.
+
+
+# V5 additions (cloud-burn round 2, NOT yet run in Studio)
+
+Everything in the V4 checklist above still applies. Round 2 adds the items below. Offline status at the last commit: `tools/run_checks.sh` passes (server harness 72 checks, client smoke 37, real DevTest in the mock 106 pass + 6 skipped).
+
+## Studio steps (do in order; each says what you get)
+1. Run `rojo serve`, press Play, run `game.ServerScriptService.DevRun:Invoke()`. You get 112 PASS and 0 FAIL (the mock runs 106; the 6 skipped are the 5 receipt checks and the landmark meshes, which only pass in Studio). New section 22 checks: 20 stages / 7 zones, a trophy awarded on the tick, high-five rejects self and non-players, rebirth gives the head start.
+2. Walk the track to the end. You get 5 new stages after the old finish, a teal "Aurora Reef" zone with its own sky tint and a "Entering Aurora Reef" toast, and the FINISH pad now at stage 20. Check: gaps are jumpable at normal speed, shards sit on the floor, scenery does not block the lane, the camera sees the new planet.
+3. Open the QUESTS panel. You get a gold "TROPHIES" button at the bottom. Press it. You get 24 rows with progress and a "DONE" mark on finished ones; "← QUESTS" returns. On a phone emulator check that the status text on the right is readable.
+4. Join with a profile that already has progress. You get one toast ("N TROPHIES unlocked! +X Wins"), not a toast per trophy.
+5. Open REBIRTH. You get the longer text (head start, star line, next title). Rebirth once: Speed becomes 10% of the cost you just paid (250 for the first rebirth), Wins reset to 0 then the milestone purse is added, you get a "TITLE: Reborn" toast and a 5 minute potion. Send a chat message: your line has a pink [Reborn] tag, and [VIP] before it if you own the pass.
+6. With 2 clients, stand next to each other. You get a "High five" prompt over the other player (key E, or tap on mobile). Use it: both get a toast with +Speed. Use it again: an error toast (pair cooldown). Walk more than 16 studs away: the prompt is gone. Check the prompt does not overlap the HUD on the phone emulator.
+7. Look at the three boards beside the spawn. You get a new pink "TOP REBIRTHS" board (it fills after a rebirth and a save). Check it does not clip the second board or hang over the track.
+8. Top bar on the phone emulator with 6+ boosts (potion, companion, shard goal, Premium, friends, 2x pass): the chips wrap to two rows of up to 4 and nothing runs off the screen; the hint banner sits below them.
+9. SHOP, COMPANIONS: every preview model is fully visible (the camera now frames the model's bounding box; if one is still cropped change the 1.1 margin in `Pets.previewCamera`).
+10. Force the new events from the command bar: `game.ReplicatedStorage:SetAttribute("ForceEvent", 5)` (Companion Craze: companion bonus x2, check the Gain number) and `6` (Gift Week: gift rewards x2). Clear with `SetAttribute("ForceEvent", nil)`.
+11. Load an account saved by v4 or v32. You get all old progress; `Stats` and `Trophies` start empty and fill on the first tick; nothing is lost.
+12. Optional badges: create badges on the Creator Hub (costs Robux) and put their ids in `Config.BadgeIds` by trophy id. With an id set, the trophy also awards the badge; with none, nothing changes.
+
+## New remote (audit)
+| Remote | Client sends | Server validation | Rate limit |
+|---|---|---|---|
+| HighFive | a Player instance | must be a Player in the server, not yourself, both profiles loaded, both characters within `Config.HighFive.Range` (16 studs), pair cooldown 10 min, 8 per hour per player | 1/s, burst 4 |
+
+Trophies, rebirth milestones, head start and stars have no remote: the server computes them from its own profile.
+
+## Risk fixes in this round
+- Boost chips used to be a single row that could overflow on phones; now a wrapping layout (`Wraps = true`).
+- Companion previews used a fixed camera; now framed from the model's bounding box.
+- The daily quest "Reach the FINISH" was offered from stage 6; it needs stage 19 now (and the finish is stage 20).
+- `tools/balance_sim.py` had a stale Void Dragon price (200,000 vs 250,000 in Config); it now reads every number from `Config.luau`.

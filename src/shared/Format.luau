@@ -22,6 +22,14 @@ function Format.short(n: number): string
 	return string.format("%.2f%s", math.floor(v * 100) / 100, SUFFIXES[i])
 end
 
+-- Speed-gain multipliers: whole numbers like "8", fractions like "7.2" (star bonuses make x1.2 steps).
+function Format.mult(x: number): string
+	if math.abs(x - math.floor(x + 0.5)) < 0.005 then
+		return Format.short(math.floor(x + 0.5))
+	end
+	return string.format("%.1f", x)
+end
+
 function Format.commas(n: number): string
 	local s = tostring(math.floor(n))
 	local out = s:reverse():gsub("(%d%d%d)", "%1,"):reverse()

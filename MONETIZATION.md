@@ -43,3 +43,11 @@ No new passes or products were created (that needs Open Cloud, which this sessio
 1. A second "Starter Pack" product (for example Speed Burst + 10 min potion at a discount) would need a new developer product ID.
 2. Badges (welcome, first rebirth, all companions) cost Robux to create but are a common retention and discovery hook.
 3. A companion-slot pass would be pay-to-win adjacent; skipped.
+
+
+## v5 changes (round 2 of `claude/cloud-burn`, not published)
+No new passes or products; existing ids, prices and grants are unchanged. Everything added is free and fixed, none of it random or purchasable:
+- **Trophies** (24, Wins rewards scaled like quests), **rebirth milestones** (title, Wins purse, potion), **rebirth head start** and a **star bonus** (+20% Speed gain per 5 rebirths), **high-fives** (both players get a few seconds of their own gain), two more weekly events (Companion Craze, Gift Week), **Aurora Reef** (stages 16-20 and two more boots bought with Wins).
+- **Rules check:** no reward depends on a purchase; no paid randomness; nothing asks players to leave the platform or to invite people for rewards (high-fives only pay when two people are physically next to each other in the server, rate-limited per pair and per hour); the new boots cost Wins only; the 2x Speed pass multiplies the same free systems as before.
+- **Badges** are wired but off: `Config.BadgeIds` maps a trophy id to a badge id; with an id set the server also calls `BadgeService:AwardBadge` (pcall'd). Creating a badge costs Robux on the Creator Hub, so none were created. Suggested first badges: Finisher (`finish`), Zookeeper (`pet5`), Fresh Start (`reb1`), Reef Explorer (`stage16`), Friendly (`hf1`). Badges are a discovery hook and the platform allows them as long as they are earned by playing.
+- **Balance (sim, free player, `tools/balance_sim.py`):** stage 10 at about 46 min with companions (57 without); stage 15 at about 167 min without rebirths; with rebirths (a greedy policy) stage 10 at 32 min and stage 15 at 61 min; stage 20 at about 575 min (9.6 h) free, about 300 min with the 2x Speed pass. The pass still roughly halves the time to a given stage, as in v4.

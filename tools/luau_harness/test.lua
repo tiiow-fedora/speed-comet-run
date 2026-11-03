@@ -251,6 +251,11 @@ local test = function()
 		check("titles: none before rebirth 1, Risen at 4", Config.RebirthTitle(0) == nil and Config.RebirthTitle(1) == "Reborn" and Config.RebirthTitle(4) == "Risen" and Config.NextMilestone(50) == nil and Config.NextMilestone(4).At == 5)
 	end
 
+	do
+		local Format = M.require(M.sharedDir.Format)
+		check("Format.mult: whole and fractional multipliers", Format.mult(8) == "8" and Format.mult(7.2) == "7.2" and Format.mult(1234) == "1.23K" and Format.mult(6 * 1.2) == "7.2")
+	end
+
 	-- ===== v5: finish quest is only offered to players who can reach the FINISH =====
 	do
 		prof.BestStage = 0

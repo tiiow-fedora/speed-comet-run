@@ -18,9 +18,10 @@ from mathutils import Vector
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 OUT = os.environ.get("RENDER_OUT") or os.path.join(ROOT, "assets", "thumbnails"); os.makedirs(OUT, exist_ok=True)
 MESH = os.path.join(ROOT, "blender", "out")
+SCALE = float(os.environ.get("RENDER_SCALE") or 1)   # e.g. 0.4 for quick drafts
 cfg = open(os.path.join(ROOT, "src", "shared", "Config.luau"), encoding="utf-8").read()
 
-V4 = any(a.startswith("v4_") or a.startswith("icon_v4") for a in sys.argv[sys.argv.index("--") + 1:]) if "--" in sys.argv else False
+V4 = any(a.startswith(("v4_", "icon_v4", "v5_", "icon_v5")) for a in sys.argv[sys.argv.index("--") + 1:]) if "--" in sys.argv else False
 
 # ---------- read Config ----------
 def rgb(t): return tuple(int(v) / 255 for v in t)
@@ -31,7 +32,7 @@ comps = []
 for m in re.finditer(r'Id = "(\w+)", Name = "([^"]+)", Cost = (\d+), Bonus = ([\d.]+), Color = Color3\.fromRGB\((\d+), (\d+), (\d+)\), Glow = Color3\.fromRGB\((\d+), (\d+), (\d+)\), Kind = "(\w+)"', cfg):
     g = m.groups(); comps.append({"id": g[0], "name": g[1], "cost": int(g[2]), "bonus": float(g[3]), "color": rgb(g[4:7]), "glow": rgb(g[7:10]), "kind": g[10]})
 stages = [(int(a), int(b), int(c)) for a, b, c in re.findall(r"\{ Req = (\d+), Wins = (\d+), Zone = (\d+) \}", cfg)]
-assert len(zones) >= 6 and len(stages) >= 15, (len(zones), len(stages))
+assert len(zones) >= 7 and len(stages) >= 20, (len(zones), len(stages))
 assert len(comps) >= 5, len(comps)
 GRAV, JUMP, W, Y = 80, 16, 40, 200
 def ws(s): return min(140, 16 + 12 * math.log(1 + max(s, 0) / 5))
@@ -245,17 +246,21 @@ def runner(x, y, z, trail=(0.47, 1, 0.55), leap=0.0):
     parts = []
     parts.append(box(x, y + 3 + leap, z, 2, 2, 1, shirt))
     parts.append(box(x, y + 4.75 + leap, z, 1.25, 1.25, 1.25, skin))
+    # simple face on the +Z side (the way the runner looks), visible when the camera is in front of the runner
+    eye = mat((0.05, 0.05, 0.12))
+    for sd in (-1, 1): parts.append(box(x + sd * 0.28, y + 4.9 + leap, z + 0.64, 0.17, 0.3, 0.05, eye))
+    parts.append(box(x, y + 4.4 + leap, z + 0.64, 0.5, 0.1, 0.05, eye))
     for side, ang in ((-1, 35), (1, -35)):
         parts.append(box(x + side * 1.5, y + 3 + leap, z, 1, 2, 1, skin, rot=(math.radians(ang), 0, 0)))
         parts.append(box(x + side * 0.5, y + 1 + leap, z, 1, 2, 1, pants, rot=(math.radians(-ang), 0, 0)))
     # (boot trail omitted: a box stand-in read as a white plank in renders)
     return parts
 
-def cam(loc, target, lens=28):
+def cam(loc, target, lens=28, shift_y=0.0):
     if "Cam" in bpy.data.objects: bpy.data.objects.remove(bpy.data.objects["Cam"])
     cd = bpy.data.cameras.new("Cam"); co = bpy.data.objects.new("Cam", cd); scn.collection.objects.link(co)
     co.location = loc; dvec = Vector(target) - Vector(loc); co.rotation_euler = dvec.to_track_quat("-Z", "Y").to_euler()
-    cd.lens = lens; cd.clip_end = 20000; scn.camera = co
+    cd.lens = lens; cd.clip_end = 20000; cd.shift_y = shift_y; scn.camera = co
 
 shots = {
     # name: (camera rbx pos, target rbx pos, lens, size, runner pos or None, leap)
@@ -269,10 +274,13 @@ shots = {
     "icon_comet_track": ((0, Y + 30, 120), (0, Y + 68, 340), 34, (512, 512), None, 0),
     "icon_gate_runner": ((-10, Y + 6, gateZ[2] - 50), (0, Y + 13, gateZ[2]), 30, (512, 512), (0, Y, gateZ[2] - 32), 0),
     # v4: code-built scenery + companions (needs V4 scenery, enabled automatically for v4_* names)
-    "v4_hero_companion": ((-9, Y + 6, -38), (-1, Y + 15, 250), 26, (1920, 1080), (0, Y, -12), 0, "starfox"),
+    # runner and companion run toward a camera ahead of them (the companion's face is visible), the spawn arch behind them
+    "v4_hero_companion": ((-7, Y + 5.5, 86), (0.5, Y + 5.8, 60), 32, (1920, 1080), (0, Y, 62), 0, "FRONTRUN:starfox"),
+    "v5_hero_pup": ((-7, Y + 5.5, 86), (0.5, Y + 5.8, 60), 32, (1920, 1080), (0, Y, 62), 0, "FRONTRUN:cometpup"),
+    "v5_aurora_reef": ((26, Y + 16, gateZ[14] + 60), (0, Y + 4, gateZ[14] + 330), 28, (1920, 1080), None, 0, None),
     "v4_mars_pup": ((18, Y + 11, gateZ[1] + 30), (0, Y + 2, gateZ[1] + 200), 26, (1920, 1080), (0, Y, gateZ[1] + 70), 2, "cometpup"),
     "v4_clouds_aerial": ((190, Y + 150, -150), (0, Y + 5, 800), 30, (1920, 1080), None, 0, None),
-    "v4_collection": ((0, Y + 4, -60), (0, Y + 4, -10), 30, (1920, 1080), None, 0, "ALL"),
+    "v4_collection": ((0, Y + 3.5, -52), (0, Y + 9, -10), 30, (1920, 1080), None, 0, "ALL"),
     "icon_v4_companion": ((0, Y + 5.2, -25), (0, Y + 4.6, -16), 34, (512, 512), None, 0, "FRONT:cometpup"),
     "icon_v4_foxes": ((0, Y + 5.2, -25), (0, Y + 4.6, -16), 34, (512, 512), None, 0, "FRONT:starfox"),
 }
@@ -283,14 +291,20 @@ for name in want:
     pet = spec[6] if len(spec) > 6 else None
     extra = runner(*run, leap=leap) if run else []
     if pet == "ALL":   # lineup of every companion, camera looks down the track at them
-        for k, cc in enumerate(comps):
-            extra += companion(cc, (k - (len(comps) - 1) / 2) * 7.5, Y + 3, -20 + (k % 2) * 4, 1.6, face=-1)
+        n = len(comps)
+        for k, cc in enumerate(comps):   # shallow V: the middle one is nearest, so the row fills the frame instead of leaving empty floor
+            mid = (n - 1) / 2
+            extra += companion(cc, (k - mid) * 8.0, Y + 3.2 + (k % 2) * 0.5, -20 - (mid - abs(k - mid)) * 5, 2.3, face=-1)
     elif pet and pet.startswith("FRONT:"):   # a single companion facing the camera (icon)
         extra += companion(comp(pet[6:]), 0, Y + 4.2, -16, 2.2, face=-1)
+    elif pet and pet.startswith("SIDERUN:"):   # side view: runner and companion run to the right, companion a little ahead and further from the camera
+        extra += companion(comp(pet[8:]), run[0] + 3.2, run[1] + 4.6, run[2] + 6.5, 1.35)
+    elif pet and pet.startswith("FRONTRUN:"):   # runner + companion running toward the camera (companion faces +Z like the runner)
+        extra += companion(comp(pet[9:]), run[0] + 4.4, run[1] + 4.4, run[2] + 1.5, 1.5)
     elif pet and run:
         extra += companion(comp(pet), run[0] - 3.4, run[1] + 1.2 + 3, run[2] - 3.8, 1.0)
-    cam(B(*c), B(*t), lens)
-    scn.render.resolution_x, scn.render.resolution_y = size
+    cam(B(*c), B(*t), lens, spec[7] if len(spec) > 7 else 0.0)
+    scn.render.resolution_x, scn.render.resolution_y = int(size[0] * SCALE), int(size[1] * SCALE)
     scn.render.filepath = os.path.join(OUT, name + ".png")
     bpy.ops.render.render(write_still=True)
     for o in extra: bpy.data.objects.remove(o)

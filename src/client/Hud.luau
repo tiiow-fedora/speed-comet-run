@@ -309,7 +309,7 @@ local function buildRebirth()
 		local nextM = Config.NextMilestone(reb)
 		local lines = {
 			"Reset Speed and Wins (you keep Boots and Companions) for a permanent boost.",
-			string.format("Now: x%s   →   After: x%s Speed gain   |   Head start: ⚡ %s", Format.short(nowMult), Format.short(afterMult), Format.short(Config.HeadStart(reb + 1))),
+			string.format("Now: x%s   →   After: x%s Speed gain   |   Head start: ⚡ %s", Format.mult(nowMult), Format.mult(afterMult), Format.short(Config.HeadStart(reb + 1))),
 			string.format("Needs ⚡ %s Speed (you have %s)", Format.commas(cost), Format.commas(attr("Speed", 0))),
 			string.format("Every %d rebirths: a star, +%d%% Speed gain.", Config.StarEvery, math.floor(Config.StarBonus * 100)),
 			if title then "Title: " .. title else "Your first rebirth earns the title Reborn.",
