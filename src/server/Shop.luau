@@ -115,15 +115,44 @@ function Shop.rebirth(player: Player)
 		return
 	end
 	p.Rebirths += 1
-	p.Speed = 0
+	p.Speed = Config.HeadStart(p.Rebirths)
 	p.Wins = 0
+	local perk: Config.RebirthMilestone? = nil
+	for _, m in Config.RebirthMilestones do
+		if m.At == p.Rebirths then
+			perk = m
+		end
+	end
+	if perk then
+		-- milestone purse is paid after the reset, so it is not wiped by it
+		local purse = Quests.winsFor(p, perk.WinsMult)
+		p.Wins += purse
+		p.TotalWins += purse
+		p.PotionLeft += perk.PotionSeconds
+	end
 	State.sync(player)
 	Gameplay.applyWalkSpeed(player, p)
 	Gameplay.resetLap(player)
 	Gameplay.teleport(player, Gameplay.layout().SpawnCFrame)
 	Quests.event(player, "rebirth", 1)
 	Gameplay.announce(player.DisplayName .. " just reached Rebirth " .. p.Rebirths .. "! 🔁", player)
-	Gameplay.notify(player, "rebirth", "Rebirth " .. p.Rebirths .. "! Speed gain is now x" .. (1 + p.Rebirths) .. " from rebirths")
+	local msg = "Rebirth " .. p.Rebirths .. "! Speed gain is now x" .. Format.short((1 + p.Rebirths) * Config.StarMult(p.Rebirths)) .. " from rebirths"
+	if p.Rebirths > 0 and Config.HeadStart(p.Rebirths) > 0 then
+		msg ..= ". Head start: ⚡" .. Format.short(Config.HeadStart(p.Rebirths))
+	end
+	Gameplay.notify(player, "rebirth", msg)
+	if perk then
+		Gameplay.notify(
+			player,
+			"trophy",
+			"TITLE: "
+				.. perk.Title
+				.. "! +"
+				.. Format.commas(Quests.winsFor(p, perk.WinsMult))
+				.. " Wins"
+				.. (if perk.PotionSeconds > 0 then " + " .. Format.time(perk.PotionSeconds) .. " of 3x Speed" else "")
+		)
+	end
 end
 
 function Shop.dailyState(p: DataService.Profile): (boolean, number)

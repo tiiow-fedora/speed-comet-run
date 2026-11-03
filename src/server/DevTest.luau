@@ -32,6 +32,12 @@ function DevTest.run()
 	backup.Quests = table.clone(p.Quests)
 	backup.Pets = table.clone(p.Pets)
 	backup.GiftClaims = table.clone(p.GiftClaims)
+	backup.Stats = table.clone(p.Stats)
+	backup.Trophies = table.clone(p.Trophies)
+	-- trophies pay Wins on the 1 s tick; mark them all awarded so the economy checks below see exact numbers (section 22 tests them)
+	for _, t in Config.Trophies do
+		p.Trophies[t.Id] = true
+	end
 	local layout = Gameplay.layout()
 	local results = { pass = 0, fail = 0 }
 	local function check(name: string, cond: boolean, detail: any?)
@@ -128,7 +134,7 @@ function DevTest.run()
 	check("rebirth rejected when slow", p.Rebirths == r0)
 	p.Speed = Config.RebirthCost(r0) + 5
 	Shop.rebirth(player)
-	check("rebirth works", p.Rebirths == r0 + 1 and p.Speed < 10 and p.Wins == 0, p.Rebirths)
+	check("rebirth works (head start, purse only at milestones)", p.Rebirths == r0 + 1 and p.Speed == Config.HeadStart(p.Rebirths) and (p.Wins == 0 or Config.NextMilestone(r0) ~= nil), p.Rebirths)
 	task.wait(1.6)
 
 	-- 7. falling returns to checkpoint (spawn after rebirth)
@@ -143,7 +149,7 @@ function DevTest.run()
 	check("gate5 rejects 1000 speed", hrp().Position.Z < layout.Stages[5].GateZ, hrp().Position.Z)
 
 	-- 9. finish pad: wins + lap reset + back to spawn
-	p.Speed = 1e7
+	p.Speed = 1e10
 	local last = layout.Stages[#layout.Stages]
 	local wf = p.Wins
 	tp(last.PadZ)

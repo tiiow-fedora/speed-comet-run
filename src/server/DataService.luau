@@ -38,6 +38,9 @@ export type Profile = {
 	GiftDay: number, -- UTC day the playtime-gift counters below belong to
 	GiftSeconds: number, -- seconds played on GiftDay
 	GiftClaims: { [string]: boolean }, -- claimed gift indexes on GiftDay
+	-- v5 fields (added 2026-11). Same rule: old saves get these defaults from reconcile().
+	Stats: { [string]: number }, -- lifetime counters for trophies: Shards, Finishes, HighFives (missing key = 0)
+	Trophies: { [string]: boolean }, -- trophy ids already awarded
 }
 
 local function defaultProfile(): Profile
@@ -65,6 +68,8 @@ local function defaultProfile(): Profile
 		GiftDay = 0,
 		GiftSeconds = 0,
 		GiftClaims = {},
+		Stats = {},
+		Trophies = {},
 	}
 end
 

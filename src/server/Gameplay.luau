@@ -15,6 +15,7 @@ local MapBuilder = require(script.Parent.MapBuilder)
 local Quests = require(script.Parent.Quests)
 local Goal = require(script.Parent.Goal)
 local Gifts = require(script.Parent.Gifts)
+local Achievements = require(script.Parent.Achievements)
 
 local Gameplay = {}
 
@@ -75,7 +76,7 @@ end
 
 function Gameplay.multiplier(player: Player, p: DataService.Profile): number
 	local boot = Config.Boots[p.Boot] or Config.Boots[1]
-	local m = boot.Mult * (1 + p.Rebirths)
+	local m = boot.Mult * (1 + p.Rebirths) * Config.StarMult(p.Rebirths)
 	if Passes.has(player, "Speed2x") then
 		m *= 2
 	end
@@ -92,7 +93,7 @@ function Gameplay.multiplier(player: Player, p: DataService.Profile): number
 	m *= Config.CurrentEvent().SpeedMult
 	local pet = Config.Companions[p.Pet]
 	if pet then
-		m *= 1 + pet.Bonus
+		m *= 1 + pet.Bonus * Config.CurrentEvent().PetMult
 	end
 	m *= Goal.multiplier()
 	if player.MembershipType == Enum.MembershipType.Premium then
@@ -235,6 +236,7 @@ local function claimPad(player: Player, p: DataService.Profile, rt: Runtime, st:
 	Quests.event(player, "pad", 1)
 	if final then
 		Quests.event(player, "finish", 1)
+		Achievements.bump(p, "Finishes")
 	end
 	Gameplay.notify(player, "wins", "+" .. Format.commas(gained) .. " Wins!", { stage = st.Index, final = final })
 	if firstClear then
@@ -320,6 +322,7 @@ local function checkPlayer(player: Player, rt: Runtime, p: DataService.Profile)
 				State.syncSpeed(player, p)
 				Gameplay.notify(player, "shard", "+" .. Format.short(amount) .. " ⚡", { id = sh.Id })
 				Quests.event(player, "shard", 1)
+				Achievements.bump(p, "Shards")
 				Goal.add(1)
 			end
 		end
@@ -421,6 +424,7 @@ function Gameplay.start(builtLayout: MapBuilder.Layout, notifyRemote: RemoteEven
 						p.PotionLeft = math.max(0, p.PotionLeft - 1)
 					end
 					Gifts.tick(player, p)
+					Achievements.check(player)
 					player:SetAttribute("Gain", m)
 					State.syncSpeed(player, p)
 					Gameplay.applyWalkSpeed(player, p)

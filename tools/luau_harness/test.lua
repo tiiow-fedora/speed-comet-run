@@ -55,6 +55,8 @@ local test = function()
 	end
 	local p1, hrp1 = join("Alice")
 	local prof = DataService.get(p1)
+	-- trophies pay Wins on the tick; the economy checks below need exact numbers, so start with them all awarded (tested separately with Bob)
+	for _, t in ipairs(Config.Trophies) do prof.Trophies[t.Id] = true end
 	check("profile exists with v4 defaults", prof and prof.Pet == 0 and type(prof.Pets) == "table" and prof.GiftSeconds >= 0, prof and prof.Pet)
 	check("player marked loaded", p1:GetAttribute("Loaded") == true)
 	check("v4 attrs after join", p1:GetAttribute("Pet") == 0 and p1:GetAttribute("OwnedPets") == "" and p1:GetAttribute("GiftReady") == false and p1:GetAttribute("TrioDone") == false)
@@ -169,7 +171,7 @@ local test = function()
 	-- second player changes the goal target (and they are friends: both get a toast)
 	p1.IsFriendsWith = function() return true end
 	local firedBeforeJoin = #M.fired
-	local p2 = join("Bob")
+	local p2, hrp2 = join("Bob")
 	p2.IsFriendsWith = function() return true end
 	M.advance(0.1)
 	local friendToast = false
@@ -222,6 +224,181 @@ local test = function()
 	for k, v in pairs(prof) do snapshot[k] = v end
 	local back = DataService.reconcile(snapshot)
 	check("v4 profile fields round-trip", back.Pet == prof.Pet and back.Pets["2"] == prof.Pets["2"] and back.TrioStreak == prof.TrioStreak and back.GiftSeconds == prof.GiftSeconds)
+
+	-- ===== v5: config integrity =====
+	do
+		local ok = true
+		local prevReq = 0
+		for i, st in ipairs(Config.Stages) do
+			if st.Req <= prevReq or not Config.Zones[st.Zone] or not Config.ZoneSky[st.Zone] then ok = false end
+			prevReq = st.Req
+		end
+		check("stages: increasing Req, every zone has colors and sky", ok and #Config.Stages == 20 and #Config.Zones == #Config.ZoneSky)
+		local boots = true
+		for i = 2, #Config.Boots do if Config.Boots[i].Mult <= Config.Boots[i - 1].Mult or Config.Boots[i].Cost <= Config.Boots[i - 1].Cost then boots = false end end
+		check("boots: Mult and Cost strictly increase", boots)
+		local ids, statsOk = {}, true
+		local known = {}
+		for _, n in ipairs(Config.TrophyStats) do known[n] = true end
+		for _, t in ipairs(Config.Trophies) do
+			if ids[t.Id] or not known[t.Stat] or t.Target <= 0 then statsOk = false end
+			ids[t.Id] = true
+		end
+		check("trophies: unique ids, known stats, positive targets", statsOk)
+		check("events: all have Pet/Gift multipliers", (function() for _, e in ipairs(Config.WeeklyEvents) do if not e.PetMult or not e.GiftMult then return false end end return true end)())
+		check("head start grows with rebirths and is 0 before the first", Config.HeadStart(0) == 0 and Config.HeadStart(1) == 250 and Config.HeadStart(5) > Config.HeadStart(4))
+		check("star mult: x1 below 5 rebirths, +20% per 5", Config.StarMult(4) == 1 and math.abs(Config.StarMult(5) - 1.2) < 1e-9 and math.abs(Config.StarMult(10) - 1.4) < 1e-9)
+		check("titles: none before rebirth 1, Risen at 4", Config.RebirthTitle(0) == nil and Config.RebirthTitle(1) == "Reborn" and Config.RebirthTitle(4) == "Risen" and Config.NextMilestone(50) == nil and Config.NextMilestone(4).At == 5)
+	end
+
+	-- ===== v5: finish quest is only offered to players who can reach the FINISH =====
+	do
+		prof.BestStage = 0
+		local leaked = 0
+		for day = 30000, 30119 do
+			Quests.ensure(p1, prof, day)
+			for _, q in ipairs(prof.Quests) do if q.Id == "finish1" then leaked = leaked + 1 end end
+		end
+		check("finish quest never offered below stage 19", leaked == 0, leaked)
+		prof.BestStage = 19
+		local seen = 0
+		for day = 30000, 30119 do
+			Quests.ensure(p1, prof, day)
+			for _, q in ipairs(prof.Quests) do if q.Id == "finish1" then seen = seen + 1 end end
+		end
+		check("finish quest offered at stage 19", seen > 0)
+		prof.BestStage = 4
+		Quests.ensure(p1, prof, Quests.today())
+	end
+
+	-- ===== v5: trophies (fresh player Bob) =====
+	do
+		local pb = DataService.get(p2)
+		check("v5 defaults on a new profile", type(pb.Stats) == "table" and type(pb.Trophies) == "table" and next(pb.Trophies) == nil)
+		pb.BestStage = 3
+		local fired0 = #M.fired
+		local wBefore = pb.Wins
+		M.advance(1.2)
+		check("stage trophies awarded (1 and 3, not 5)", pb.Trophies.stage1 and pb.Trophies.stage3 and not pb.Trophies.stage5)
+		check("trophy Wins paid", pb.Wins >= wBefore + Quests.winsFor(pb, 2) + Quests.winsFor(pb, 3))
+		local toasts = 0
+		for i = fired0 + 1, #M.fired do local f = M.fired[i]; if f.remote == "Notify" and f.player == p2 and f.args[1] == "trophy" then toasts = toasts + 1 end end
+		check("several trophies at once give one toast", toasts == 1, toasts)
+		check("trophy attributes replicated", p2:GetAttribute("TrophiesDone") ~= "" and string.match(p2:GetAttribute("TrophyData") or "", "^3,") ~= nil, p2:GetAttribute("TrophyData"))
+		local wAfter = pb.Wins
+		M.advance(3)
+		check("a trophy is never awarded twice", pb.Trophies.stage1 and pb.Wins - wAfter < Quests.winsFor(pb, 2))
+		pb.Stats.Shards = 49
+		M.advance(1.2)
+		check("shard trophy not yet at 49", not pb.Trophies.shards50)
+		pb.Stats.Shards = 50
+		M.advance(1.2)
+		check("shard trophy at 50", pb.Trophies.shards50 == true)
+		pb.Pets = { ["1"] = true }
+		M.advance(1.2)
+		check("adopting a companion earns Best Friend", pb.Trophies.pet1 == true)
+		-- a configured badge id must not break awarding (BadgeService is pcall'd and only touched when an id is set)
+		Config.BadgeIds.pet5 = 12345
+		pb.Pets = { ["1"] = true, ["2"] = true, ["3"] = true, ["4"] = true, ["5"] = true }
+		M.advance(1.2)
+		check("trophy with a badge id still awards", pb.Trophies.pet5 == true)
+		Config.BadgeIds.pet5 = nil
+		-- real shard pickup bumps the lifetime counter
+		local s0 = prof.Stats.Shards or 0
+		check("p1 shard pickups counted in Stats", s0 >= 5, s0)
+	end
+
+	-- ===== v5: rebirth depth =====
+	do
+		prof.Rebirths = 0
+		prof.PotionLeft = 0
+		prof.Speed = Config.RebirthCost(0)
+		prof.Wins = 999
+		prof.BestStage = 4
+		remotes.Rebirth.OnServerEvent:Fire(p1)
+		M.advance(0.1)
+		check("rebirth 1: head start Speed", prof.Rebirths == 1 and prof.Speed == Config.HeadStart(1), prof.Speed)
+		check("rebirth 1: milestone purse + potion, old Wins wiped", prof.Wins == Quests.winsFor(prof, Config.RebirthMilestones[1].WinsMult) and prof.PotionLeft >= Config.RebirthMilestones[1].PotionSeconds - 1, prof.Wins)
+		prof.Speed = Config.RebirthCost(1); prof.Wins = 50; prof.PotionLeft = 0
+		M.advance(1.5)
+		remotes.Rebirth.OnServerEvent:Fire(p1)
+		M.advance(0.1)
+		check("rebirth 2: no milestone, Wins reset to 0", prof.Rebirths == 2 and prof.Wins == 0 and prof.PotionLeft == 0, prof.Wins)
+		-- the star bonus: rebirth 5 raises gain by 20% on top of x(1+r)
+		prof.Rebirths = 4; prof.Boot = 1; prof.Pet = 0; prof.PotionLeft = 0
+		local g4 = Gameplay.multiplier(p1, prof)
+		prof.Rebirths = 5
+		local g5 = Gameplay.multiplier(p1, prof)
+		check("rebirth 5 star: gain x(6/5) x1.2", math.abs(g5 / g4 - (6 / 5) * 1.2) < 1e-6, g5 / g4)
+		prof.Rebirths = 0
+		prof.Speed = 5; prof.Wins = 0
+	end
+
+	-- ===== v5: new weekly events change companions and gifts =====
+	do
+		prof.Pet = 4; prof.Pets["4"] = true; prof.Rebirths = 0; prof.PotionLeft = 0
+		RS:SetAttribute("ForceEvent", 5)
+		local craze = Gameplay.multiplier(p1, prof)
+		RS:SetAttribute("ForceEvent", 1)
+		local normal = Gameplay.multiplier(p1, prof)
+		check("Companion Craze doubles the companion bonus", math.abs(craze / normal - (1 + 2 * Config.Companions[4].Bonus) / (1 + Config.Companions[4].Bonus)) < 1e-6, craze / normal)
+		local pb = DataService.get(p2)
+		pb.GiftDay = Quests.today(); pb.GiftSeconds = 10 * 3600; pb.GiftClaims = {}; pb.BestStage = 4
+		RS:SetAttribute("ForceEvent", 1)
+		local w0 = pb.Wins
+		remotes.ClaimGift.OnServerEvent:Fire(p2, 1)
+		M.advance(0.1)
+		local normalGift = pb.Wins - w0
+		RS:SetAttribute("ForceEvent", 6)
+		w0 = pb.Wins
+		remotes.ClaimGift.OnServerEvent:Fire(p2, 2)
+		M.advance(0.1)
+		local weekGift = pb.Wins - w0
+		RS:SetAttribute("ForceEvent", nil)
+		check("Gift Week pays double", weekGift == Quests.winsFor(pb, Config.Gifts[2].Mult * 2) and normalGift == Quests.winsFor(pb, Config.Gifts[1].Mult), normalGift .. "/" .. weekGift)
+		prof.Pet = 2
+	end
+
+	-- ===== v5: high-fives =====
+	do
+		local pa, pb = DataService.get(p1), DataService.get(p2)
+		hrp1.Position = Vector3.new(0, 204, 100); hrp2.Position = Vector3.new(4, 204, 102)
+		Gameplay.runtime(p1).grace = math.huge; Gameplay.runtime(p2).grace = math.huge
+		local sa, sb = pa.Speed, pb.Speed
+		remotes.HighFive.OnServerEvent:Fire(p1, p2)
+		M.advance(0.1)
+		check("high five pays both players and counts", pa.Speed > sa and pb.Speed > sb and pa.Stats.HighFives == 1 and pb.Stats.HighFives == 1, (pa.Speed - sa) .. "/" .. (pb.Speed - sb))
+		M.advance(30)
+		local sa2 = pa.Speed
+		remotes.HighFive.OnServerEvent:Fire(p2, p1)
+		M.advance(0.1)
+		check("same pair is on cooldown (either direction)", pa.Stats.HighFives == 1 and math.abs(pa.Speed - sa2) < 40)
+		M.advance(Config.HighFive.PairCooldown + 5)
+		hrp2.Position = Vector3.new(60, 204, 100)
+		remotes.HighFive.OnServerEvent:Fire(p1, p2)
+		M.advance(0.1)
+		check("too far apart: rejected", pa.Stats.HighFives == 1)
+		hrp2.Position = Vector3.new(3, 204, 100)
+		remotes.HighFive.OnServerEvent:Fire(p1, p1); remotes.HighFive.OnServerEvent:Fire(p1, "Bob"); remotes.HighFive.OnServerEvent:Fire(p1, 42); remotes.HighFive.OnServerEvent:Fire(p1, nil)
+		M.advance(0.1)
+		check("self / non-player targets rejected", pa.Stats.HighFives == 1)
+		M.advance(6) -- the remote is rate limited (1/s, burst 4); the junk calls above used the burst
+		remotes.HighFive.OnServerEvent:Fire(p1, p2)
+		M.advance(0.1)
+		check("after the cooldown they can high-five again", pa.Stats.HighFives == 2)
+		local Social = M.require(M.serverDir.Social)
+		local fake = 1e6
+		local n = 0
+		local realCap = Config.HighFive.PerHour
+		Config.HighFive.PerHour = 3 -- one pair can only reach 6/hour, so lower the cap to exercise it
+		for i = 1, 8 do
+			fake = fake + Config.HighFive.PairCooldown + 1
+			if Social.highFive(p1, p2, fake) then n = n + 1 end
+		end
+		Config.HighFive.PerHour = realCap
+		check("hourly cap stops a farmed high-five chain", n >= 3 and n < 8, n)
+		hrp1.Position = Vector3.new(0, 204, 0); hrp2.Position = Vector3.new(0, 204, 0)
+	end
 
 	-- leaving: runtime cleaned, goal target refreshed
 	Players.PlayerRemoving:Fire(p2)

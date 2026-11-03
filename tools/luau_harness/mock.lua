@@ -274,7 +274,7 @@ M.globals = {
 	game = game, workspace = workspace, task = task, Instance = Instance, Vector3 = Vector3, CFrame = CFrame, Color3 = Color3,
 	Random = { new = function(seed) local s = seed or 1; return { NextInteger = function(_, a, b) s = (s * 1103515245 + 12345) % 2147483648; return a + s % (b - a + 1) end, NextNumber = function(_, a, b) s = (s * 1103515245 + 12345) % 2147483648; return (a or 0) + (s / 2147483648) * ((b or 1) - (a or 0)) end } end },
 	Enum = Any, UDim2 = Any, UDim = Any, Vector2 = Any, TweenInfo = Any, NumberRange = Any, NumberSequence = Any, ColorSequence = Any, NumberSequenceKeypoint = Any,
-	warn = function(...) print("WARN", ...) end, print = print, pairs = pairs, ipairs = ipairs, next = next, type = type, typeof = function(v) if type(v) == "table" and getmetatable(v) == Vector3 then return "Vector3" end return type(v) end,
+	warn = function(...) print("WARN", ...) end, print = print, pairs = pairs, ipairs = ipairs, next = next, type = type, typeof = function(v) if type(v) == "table" and getmetatable(v) == Vector3 then return "Vector3" end if type(v) == "table" and getmetatable(v) == instMT then return "Instance" end return type(v) end,
 	tostring = tostring, tonumber = tonumber, math = math, string = string, table = table, os = setmetatable({ clock = function() return now end }, { __index = os }), select = select, error = error, assert = assert, pcall = pcall, xpcall = xpcall,
 	setmetatable = setmetatable, getmetatable = getmetatable, rawget = rawget, rawset = rawset, unpack = table.unpack, coroutine = coroutine, utf8 = utf8, debug = debug,
 }
@@ -301,6 +301,7 @@ local nextId = 1000
 function M.newPlayer(name)
 	nextId = nextId + 1
 	local p = M.inst("Folder", name)
+	rawset(p, "ClassName", "Player")
 	p.UserId = nextId; p.DisplayName = name
 	p.IsFriendsWith = function() return false end
 	p.CharacterAdded = Signal.new(); p.CharacterRemoving = Signal.new()

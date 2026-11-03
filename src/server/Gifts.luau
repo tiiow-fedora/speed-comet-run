@@ -89,7 +89,7 @@ function Gifts.claim(player: Player, raw: any)
 	end
 	local g = Config.Gifts[raw]
 	p.GiftClaims[key] = true
-	local wins = Quests.winsFor(p, g.Mult)
+	local wins = Quests.winsFor(p, g.Mult * Config.CurrentEvent().GiftMult)
 	p.Wins += wins
 	p.TotalWins += wins
 	local msg = "Gift: +" .. Format.commas(wins) .. " Wins"
