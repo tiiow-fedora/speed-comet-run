@@ -104,7 +104,7 @@ Same script (`blender/thumbnails/render_thumbs.py`), now with: a `RENDER_SCALE` 
 | Render (in `promo/renders/`) | Verdict | Why |
 |---|---|---|
 | `v4_hero_companion.png` (fixed) | candidate thumbnail | The earlier shot was rejected because the camera was behind the runner and the Star Fox showed only a white tail blob. Now the camera is ahead: the runner and the fox run toward it, the fox's ears, eyes and nose are visible, the spawn arch fills the background. Weak spots: flat blue sky behind the arch and the stand-in runner's plain face; replace with a Studio capture when possible |
-| `v4_collection.png` (cropped) | candidate thumbnail | Same five companions, but now arranged in a shallow V (the middle one nearest) with the camera tilted up, so the pets fill the frame and the empty floor is gone (about 12% of the frame is floor, down from about 45%). The Void Dragon's wing tips are cut at the left edge |
+| `v4_collection.png` (cropped) | candidate thumbnail | Same five companions, but now arranged in a shallow V (the middle one nearest) with the camera tilted up, so the pets fill the frame and the empty floor is gone (about 18% of the frame is floor, down from about 40%). The Void Dragon's wing tips are cut at the left edge |
 | `v5_aurora_reef.png` | candidate (needs a crop or a sky element) | The new Aurora Reef zone seen along the track: teal floor, teal rocks, clouds, gate ahead. About 40% of the frame is empty sky; use it as a detail-page image, not a homepage thumbnail |
 | `rejected/v4_hero_companion.png` | rejected (kept for the record) | The old behind-the-runner version |
 
