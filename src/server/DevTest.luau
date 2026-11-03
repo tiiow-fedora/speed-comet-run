@@ -200,12 +200,25 @@ function DevTest.run()
 
 	-- 11. save migration (v2): an old-format (v1) save keeps its values and gains v2 defaults
 	local oldSave = {
-		Speed = 123456, Wins = 789, TotalWins = 9999, Rebirths = 2, Boots = { ["1"] = true, ["2"] = true, ["3"] = true },
-		Boot = 3, PotionLeft = 30, DailyStreak = 4, LastDaily = 1791000000, BestStage = 7,
-		Receipts = { "abc", "def" }, TutorialDone = true, PlaySeconds = 3600,
+		Speed = 123456,
+		Wins = 789,
+		TotalWins = 9999,
+		Rebirths = 2,
+		Boots = { ["1"] = true, ["2"] = true, ["3"] = true },
+		Boot = 3,
+		PotionLeft = 30,
+		DailyStreak = 4,
+		LastDaily = 1791000000,
+		BestStage = 7,
+		Receipts = { "abc", "def" },
+		TutorialDone = true,
+		PlaySeconds = 3600,
 	}
 	local m = DataService.reconcile(oldSave)
-	check("migration keeps v1 values", m.Speed == 123456 and m.Wins == 789 and m.Rebirths == 2 and m.Boot == 3 and m.Boots["3"] == true and #m.Receipts == 2 and m.BestStage == 7 and m.TutorialDone == true)
+	check(
+		"migration keeps v1 values",
+		m.Speed == 123456 and m.Wins == 789 and m.Rebirths == 2 and m.Boot == 3 and m.Boots["3"] == true and #m.Receipts == 2 and m.BestStage == 7 and m.TutorialDone == true
+	)
 	check("migration adds v2 defaults", m.BestSpeed == 0 and m.QuestDay == 0 and type(m.Quests) == "table" and #m.Quests == 0)
 	local junk = DataService.reconcile({ Speed = "lots", Quests = 5, Boots = {} })
 	check("migration rejects wrong types", junk.Speed == 0 and type(junk.Quests) == "table" and junk.Boots["1"] == true)
@@ -521,7 +534,11 @@ function DevTest.run()
 				flags += 1
 			end
 		end
-		check("v4 scenery built (clouds, lanterns, 2 flags per stage)", clouds >= #Config.Stages * 5 and lanterns >= #Config.Stages * 6 and flags == #Config.Stages * 2, clouds .. "/" .. lanterns .. "/" .. flags)
+		check(
+			"v4 scenery built (clouds, lanterns, 2 flags per stage)",
+			clouds >= #Config.Stages * 5 and lanterns >= #Config.Stages * 6 and flags == #Config.Stages * 2,
+			clouds .. "/" .. lanterns .. "/" .. flags
+		)
 		check("scenery stays under the part budget", (layout.PartCount or 0) < 3000, layout.PartCount)
 		check("one sky tint per zone", #Config.ZoneSky == #Config.Zones)
 		local okAmb, Amb = pcall(function()

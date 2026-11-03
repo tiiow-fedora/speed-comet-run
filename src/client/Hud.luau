@@ -744,7 +744,8 @@ local function buildTop()
 
 	local speedChip = chip(top, UDim2.fromOffset(300, 64), UDim2.fromOffset(150, 0), Theme.Accent)
 	speedLabel = Theme.label({ Text = "⚡ 0", Size = UDim2.new(0.68, 0, 0, 46), Position = UDim2.fromOffset(10, 9), TextXAlignment = Enum.TextXAlignment.Left, Parent = speedChip })
-	gainLabel = Theme.label({ Text = "+1/s", Size = UDim2.new(0.3, -8, 0, 26), Position = UDim2.new(0.7, 0, 0, 19), TextXAlignment = Enum.TextXAlignment.Right, TextColor3 = Theme.Green, Parent = speedChip })
+	gainLabel =
+		Theme.label({ Text = "+1/s", Size = UDim2.new(0.3, -8, 0, 26), Position = UDim2.new(0.7, 0, 0, 19), TextXAlignment = Enum.TextXAlignment.Right, TextColor3 = Theme.Green, Parent = speedChip })
 
 	local rebChip = chip(top, UDim2.fromOffset(140, 56), UDim2.fromOffset(460, 4), Theme.Pink)
 	Theme.label({ Text = "REBIRTHS", Size = UDim2.new(1, 0, 0, 16), Position = UDim2.fromOffset(0, 4), TextColor3 = Theme.Muted, Font = Theme.BodyFont, Parent = rebChip })
@@ -1064,7 +1065,10 @@ local function refreshTop()
 	if goalLeft > 0 then
 		table.insert(boosts, { "🌠 BOOST x" .. Config.Goal.BoostMult .. " " .. Format.time(goalLeft), Color3.fromRGB(255, 240, 120) })
 	else
-		table.insert(boosts, { "🌠 Shards " .. (ReplicatedStorage:GetAttribute("GoalProgress") or 0) .. "/" .. (ReplicatedStorage:GetAttribute("GoalTarget") or Config.Goal.BaseTarget), Color3.fromRGB(120, 255, 240) })
+		table.insert(boosts, {
+			"🌠 Shards " .. (ReplicatedStorage:GetAttribute("GoalProgress") or 0) .. "/" .. (ReplicatedStorage:GetAttribute("GoalTarget") or Config.Goal.BaseTarget),
+			Color3.fromRGB(120, 255, 240),
+		})
 	end
 	local friends = attr("Friends", 0)
 	if friends > 0 then
@@ -1212,7 +1216,33 @@ function Hud.build()
 			end
 		end
 	end
-	for _, name in { "Speed", "Gain", "Wins", "Rebirths", "Boot", "OwnedBoots", "PotionLeft", "Checkpoint", "Friends", "DailyReady", "DailyDay", "Pass_Speed2x", "Pass_Wins2x", "Pass_VIP", "Slow", "Quests", "QuestReady", "Pet", "OwnedPets", "GiftReady", "GiftClaimed", "TrioDone", "TrioStreak" } do
+	for _, name in
+		{
+			"Speed",
+			"Gain",
+			"Wins",
+			"Rebirths",
+			"Boot",
+			"OwnedBoots",
+			"PotionLeft",
+			"Checkpoint",
+			"Friends",
+			"DailyReady",
+			"DailyDay",
+			"Pass_Speed2x",
+			"Pass_Wins2x",
+			"Pass_VIP",
+			"Slow",
+			"Quests",
+			"QuestReady",
+			"Pet",
+			"OwnedPets",
+			"GiftReady",
+			"GiftClaimed",
+			"TrioDone",
+			"TrioStreak",
+		}
+	do
 		player:GetAttributeChangedSignal(name):Connect(refreshAll)
 	end
 	for _, name in { "GoalProgress", "GoalTarget", "GoalBoostEnds" } do

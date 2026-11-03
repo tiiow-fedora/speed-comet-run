@@ -78,10 +78,24 @@ function Leaderboard.build(parent: Instance)
 	local Y = Config.TrackY
 	local W = Config.TrackWidth
 	-- beside the spawn (opposite the zone sign), angled toward players leaving the spawn; +X is screen-left facing +Z
-	makeBoard("TopWins", "CometRun_TopWins_v1", "🏆 TOP RUNNERS", "Total Wins, all servers",
-		CFrame.new(W / 2 + 18, Y + 13, 12) * CFrame.Angles(0, math.rad(40), 0), Color3.fromRGB(255, 214, 70), parent)
-	makeBoard("TopSpeed", "CometRun_TopSpeed_v1", "⚡ TOP SPEED", "Best Speed ever reached",
-		CFrame.new(W / 2 + 30, Y + 13, 36) * CFrame.Angles(0, math.rad(55), 0), Color3.fromRGB(80, 220, 255), parent)
+	makeBoard(
+		"TopWins",
+		"CometRun_TopWins_v1",
+		"🏆 TOP RUNNERS",
+		"Total Wins, all servers",
+		CFrame.new(W / 2 + 18, Y + 13, 12) * CFrame.Angles(0, math.rad(40), 0),
+		Color3.fromRGB(255, 214, 70),
+		parent
+	)
+	makeBoard(
+		"TopSpeed",
+		"CometRun_TopSpeed_v1",
+		"⚡ TOP SPEED",
+		"Best Speed ever reached",
+		CFrame.new(W / 2 + 30, Y + 13, 36) * CFrame.Angles(0, math.rad(55), 0),
+		Color3.fromRGB(80, 220, 255),
+		parent
+	)
 end
 
 -- Kept for compatibility with existing callers: submits Total Wins.

@@ -397,7 +397,12 @@ local function scenery(z0: number, z1: number, stageIndex: number, padZ: number,
 	local len = z1 - z0
 	-- two clouds per stage, one each side, at different heights; every other stage adds a low one below the track
 	for k, side in { -1, 1 } do
-		cloud(Vector3.new(side * sceneryRng:NextNumber(W / 2 + 45, W / 2 + 95), Y + sceneryRng:NextNumber(18, 55), z0 + len * (0.25 + 0.4 * (k - 1)) + sceneryRng:NextNumber(-20, 20)), sceneryRng:NextNumber(9, 15), zone.Accent, parent)
+		cloud(
+			Vector3.new(side * sceneryRng:NextNumber(W / 2 + 45, W / 2 + 95), Y + sceneryRng:NextNumber(18, 55), z0 + len * (0.25 + 0.4 * (k - 1)) + sceneryRng:NextNumber(-20, 20)),
+			sceneryRng:NextNumber(9, 15),
+			zone.Accent,
+			parent
+		)
 	end
 	if stageIndex % 2 == 0 then
 		cloud(Vector3.new(sceneryRng:NextNumber(-60, 60), Y - sceneryRng:NextNumber(55, 90), z0 + len * 0.5), sceneryRng:NextNumber(16, 24), zone.Rock, parent)
