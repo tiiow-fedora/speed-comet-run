@@ -19,7 +19,16 @@ local folder: Folder? = nil
 
 local function add(model: Model, shape: Enum.PartType, size: Vector3, offset: CFrame, color: Color3, material: Enum.Material?, transparency: number?): Part
 	local p = Instance.new("Part")
-	p.Shape = shape
+	-- Ball parts are always round (uniform size). A stretched sphere is a block with a Sphere SpecialMesh instead.
+	local uniform = math.abs(size.X - size.Y) < 0.01 and math.abs(size.Y - size.Z) < 0.01
+	if shape == Enum.PartType.Ball and not uniform then
+		p.Shape = Enum.PartType.Block
+		local mesh = Instance.new("SpecialMesh")
+		mesh.MeshType = Enum.MeshType.Sphere
+		mesh.Parent = p
+	else
+		p.Shape = shape
+	end
 	p.Size = size
 	p.Anchored = true
 	p.CanCollide = false
