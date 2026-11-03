@@ -542,6 +542,11 @@ function DevTest.run()
 		)
 		check("scenery stays under the part budget", (layout.PartCount or 0) < 3000, layout.PartCount)
 		check("one sky tint per zone", #Config.ZoneSky == #Config.Zones)
+		local farthest = 0
+		for _, shard in layout.Shards do
+			farthest = math.max(farthest, shard.Pos.Z)
+		end
+		check("shards reach the late zones", farthest > layout.Stages[#layout.Stages - 2].StartZ, farthest)
 		local okAmb, Amb = pcall(function()
 			return require((game:GetService("StarterPlayer").StarterPlayerScripts :: any).Client.Ambience)
 		end)

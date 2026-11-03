@@ -18,6 +18,6 @@ Owner decisions that could change this plan: paying the refundable publishing fe
 | Oct 5: Companions v1 | Built in code, fixed prices in Wins, 5 companions with +10% to +200% Speed gain, persistent (`Pets`, `Pet`), previews in the panel. Models are code-built primitives, not Blender meshes (see MORNING_REPORT_V4.md). Untested in Studio |
 | Oct 12: more quests + weekly streak | 9 new quest pool entries (shards, boots, companion, rebirth), a `MinStage` filter so new players never get late-game quests, and the Daily Trio bonus with a 7-day streak (free potion). Untested in Studio |
 | Oct 19: thumbnail test | Not done. 4 new candidates are in `promo/renders/`; needs a live Studio-free upload and 7 days of data |
-| Oct 26: shards in every zone + server shard goal | Server goal built (shared bar, 1.5x Speed for 2 min). Shards are still only in stages 1-3, so the goal fills slowly past the first zone; extending `Config.ShardStages` is a one-line change but changes map part count and balance |
+| Oct 26: shards in every zone + server shard goal | Server goal built (shared bar, 1.5x Speed for 2 min). Shards now exist in every stage (stages 1-3 keep spacing 18, later stages 30), so the bar can fill anywhere on the track. Untested in Studio |
 
-Next ideas not yet built: shards in every zone, a leaderboard for Rebirths, Blender-made companion meshes (replace `Pets.build`), companion fusion or a second slot as a sink for late-game Wins, a badge set (each costs Robux to create, owner decision).
+Next ideas not yet built: a leaderboard for Rebirths, Blender-made companion meshes (replace `Pets.build`), companion fusion or a second slot as a sink for late-game Wins, a badge set (each costs Robux to create, owner decision).

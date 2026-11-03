@@ -94,7 +94,7 @@ Written in a Linux container with no Roblox Studio. What was and was not checked
 The mock does not simulate physics, rendering, layout, real DataStores, MarketplaceService or real Roblox types. A pass there means the logic runs and the numbers add up. It says nothing about how anything looks or feels.
 
 ## To run in Studio before publishing
-1. `rojo serve` (or `rojo build -o CometRun.rbxl`), open, press Play. Run `game.ServerScriptService.DevRun:Invoke()` from the command bar. Expect 0 FAIL and 104 PASS (v3 had 58; v4 adds 46 in sections 17-21 and changes the pad check to include the first-clear bonus). The mock runs 98 of them; the other 6 (5 receipt checks, landmark meshes) can only pass in Studio.
+1. `rojo serve` (or `rojo build -o CometRun.rbxl`), open, press Play. Run `game.ServerScriptService.DevRun:Invoke()` from the command bar. Expect 0 FAIL and 105 PASS (v3 had 58; v4 adds 47 in sections 17-21 and changes the pad check to include the first-clear bonus). The mock runs 99 of them; the other 6 (5 receipt checks, landmark meshes) can only pass in Studio.
 2. Repeat with Test > Clients and Servers, 2 players, and once in the iPhone 7 emulator (667x375).
 3. UI by eye, desktop and phone emulator:
    - SHOP button (was BOOTS): the pink "COMPANIONS" row opens the Companions panel; "BOOTS" row at the bottom returns.
@@ -109,7 +109,7 @@ The mock does not simulate physics, rendering, layout, real DataStores, Marketpl
 5. Shared goal with 2 clients: collect shards on both until the bar fills; both clients should get the "COMET BOOST" toast and the boost chip with a countdown.
 6. Playtime gifts: join, wait 3 minutes (or set `GiftSeconds` in DevTest), claim; rejoin and confirm the claimed state and the timer persist.
 7. Save/load: buy a companion, claim a gift, leave and rejoin. `Pet`, `Pets`, `GiftClaims`, `TrioStreak` must persist. Also load an account saved by v32 (any existing profile): everything old must be intact and the new fields default to empty.
-8. Performance: map part count printed in Output at startup (offline estimate about 1,530; v3 was 1,195). Check FPS on the phone emulator.
+8. Performance: map part count printed in Output at startup (offline estimate about 1,640; v3 was 1,195). Check FPS on the phone emulator.
 9. Live check after publishing: join, collect a shard, buy the first companion, claim a gift, and confirm every pass/product still prompts (`tests/live_check_v32.md` is the template).
 
 ## New remotes (audit)
