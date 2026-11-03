@@ -240,7 +240,7 @@ local function gate(z: number, stageIndex: number, req: number, zone: Config.Zon
 	}, g)
 end
 
-local function pad(z: number, stageIndex: number, wins: number, zone: Config.Zone, final: boolean, parent: Instance)
+local function pad(z: number, stageIndex: number, wins: number, _zone: Config.Zone, final: boolean, parent: Instance)
 	local p = part({
 		Name = "WinsPad" .. stageIndex,
 		Shape = "Cylinder",
@@ -343,6 +343,84 @@ local function decorate(z0: number, z1: number, zone: Config.Zone, parent: Insta
 		end
 		z += 22
 	end
+end
+
+-- v4 cheerful scenery: puffy clouds, glowing lantern orbs and pennant flags. All of it is non-colliding decoration
+-- (no touch/query), uses its own Random so the existing rock layout does not change, and adds ~20 parts per stage.
+local sceneryRng = Random.new(4040)
+
+local function cloud(center: Vector3, scale: number, tint: Color3, parent: Instance)
+	local puffs = {
+		{ Vector3.new(0, 0, 0), 1.0 },
+		{ Vector3.new(1.0, -0.15, 0.2), 0.8 },
+		{ Vector3.new(-1.0, -0.2, -0.1), 0.85 },
+		{ Vector3.new(0.4, 0.4, 0.1), 0.7 },
+		{ Vector3.new(-0.45, 0.35, -0.2), 0.6 },
+	}
+	for _, pf in puffs do
+		part({
+			Name = "Cloud",
+			Shape = "Ball",
+			Size = Vector3.one * scale * (pf[2] :: number) * 1.4,
+			CFrame = CFrame.new(center + (pf[1] :: Vector3) * scale),
+			Color = Color3.new(1, 1, 1):Lerp(tint, 0.3),
+			Material = Enum.Material.SmoothPlastic,
+			Transparency = 0.04,
+			CanCollide = false,
+			CastShadow = false,
+		}, parent)
+	end
+end
+
+local function pennant(x: number, z: number, color: Color3, parent: Instance)
+	part({
+		Name = "PennantPole",
+		Size = Vector3.new(0.6, 16, 0.6),
+		CFrame = CFrame.new(x, Y + 8, z),
+		Color = Color3.fromRGB(250, 250, 255),
+		Material = Enum.Material.SmoothPlastic,
+		CanCollide = false,
+		CastShadow = false,
+	}, parent)
+	part({
+		Name = "PennantFlag",
+		Size = Vector3.new(0.3, 3.5, 6),
+		CFrame = CFrame.new(x, Y + 14, z + 3.2),
+		Color = color,
+		Material = Enum.Material.Neon,
+		CanCollide = false,
+		CastShadow = false,
+	}, parent)
+end
+
+local function scenery(z0: number, z1: number, stageIndex: number, padZ: number, zone: Config.Zone, parent: Instance)
+	local len = z1 - z0
+	-- two clouds per stage, one each side, at different heights; every other stage adds a low one below the track
+	for k, side in { -1, 1 } do
+		cloud(Vector3.new(side * sceneryRng:NextNumber(W / 2 + 45, W / 2 + 95), Y + sceneryRng:NextNumber(18, 55), z0 + len * (0.25 + 0.4 * (k - 1)) + sceneryRng:NextNumber(-20, 20)), sceneryRng:NextNumber(9, 15), zone.Accent, parent)
+	end
+	if stageIndex % 2 == 0 then
+		cloud(Vector3.new(sceneryRng:NextNumber(-60, 60), Y - sceneryRng:NextNumber(55, 90), z0 + len * 0.5), sceneryRng:NextNumber(16, 24), zone.Rock, parent)
+	end
+	-- lantern orbs floating beside the track, tinted by the zone's accent
+	for _ = 1, 6 do
+		local side = if sceneryRng:NextNumber() < 0.5 then -1 else 1
+		local size = sceneryRng:NextNumber(1.6, 3.2)
+		part({
+			Name = "Lantern",
+			Shape = "Ball",
+			Size = Vector3.one * size,
+			CFrame = CFrame.new(side * sceneryRng:NextNumber(W / 2 + 5, W / 2 + 38), Y + sceneryRng:NextNumber(6, 34), z0 + sceneryRng:NextNumber(0, len)),
+			Color = zone.Accent:Lerp(Color3.new(1, 1, 1), sceneryRng:NextNumber(0, 0.35)),
+			Material = Enum.Material.Neon,
+			Transparency = 0.1,
+			CanCollide = false,
+			CastShadow = false,
+		}, parent)
+	end
+	-- pennant flags flank every Wins pad
+	pennant(-(W / 2 - 3), padZ, zone.Accent, parent)
+	pennant(W / 2 - 3, padZ, zone.Accent, parent)
 end
 
 local function planet(pos: Vector3, radius: number, color: Color3, ringColor: Color3?, parent: Instance)
@@ -642,6 +720,7 @@ function MapBuilder.build(): Layout
 		local padZ = z + 25
 		pad(padZ, i, st.Wins, zone, final, track)
 		decorate(stageStart, z + padLen, zone, deco)
+		scenery(stageStart, z + padLen, i, padZ, zone, deco)
 		z += padLen
 		table.insert(layout.Stages, {
 			Index = i,
