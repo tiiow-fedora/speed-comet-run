@@ -31,14 +31,19 @@ local function def(id: string): Config.QuestDef?
 end
 Quests.def = def
 
-function Quests.reward(p: DataService.Profile, d: Config.QuestDef): number
+-- Wins for `mult` units of the player's current reward scale (shared with the playtime gifts).
+function Quests.winsFor(p: DataService.Profile, mult: number): number
 	local st = Config.Stages[math.clamp(p.BestStage, 1, #Config.Stages)]
-	return math.floor(d.Mult * math.max(Config.QuestMinBase, st.Wins) * Config.CurrentEvent().QuestMult)
+	return math.floor(mult * math.max(Config.QuestMinBase, st.Wins))
+end
+
+function Quests.reward(p: DataService.Profile, d: Config.QuestDef): number
+	return math.floor(Quests.winsFor(p, d.Mult) * Config.CurrentEvent().QuestMult)
 end
 
 -- Make sure the profile holds today's three quests (new day -> new quests).
-function Quests.ensure(player: Player, p: DataService.Profile): boolean
-	local day = Quests.today()
+function Quests.ensure(player: Player, p: DataService.Profile, forceDay: number?): boolean
+	local day = forceDay or Quests.today()
 	if p.QuestDay == day and #p.Quests == 3 and def(p.Quests[1].Id) then
 		return false
 	end
@@ -47,7 +52,8 @@ function Quests.ensure(player: Player, p: DataService.Profile): boolean
 	for tier = 1, 3 do
 		local pool = {}
 		for _, q in Config.QuestPool do
-			if q.Tier == tier then
+			-- quests that need progress a new player can't have yet (MinStage) are left out of their pool
+			if q.Tier == tier and (q.MinStage == nil or p.BestStage >= q.MinStage) then
 				table.insert(pool, q)
 			end
 		end
@@ -85,7 +91,44 @@ function Quests.sync(player: Player)
 	end
 	player:SetAttribute("Quests", HttpService:JSONEncode(out))
 	player:SetAttribute("QuestReady", claimable)
+	local today = Quests.today()
+	player:SetAttribute("TrioDone", p.TrioDay == today)
+	player:SetAttribute("TrioStreak", if p.TrioDay >= today - 1 then p.TrioStreak else 0)
 end
+
+-- Daily Trio: all three quests claimed on one UTC day -> bonus Wins + a streak (a potion every 7th day).
+local function checkTrio(player: Player, p: DataService.Profile)
+	local today = Quests.today()
+	if p.TrioDay == today or #p.Quests ~= 3 then
+		return
+	end
+	for _, q in p.Quests do
+		if not q.C then
+			return
+		end
+	end
+	p.TrioStreak = if p.TrioDay == today - 1 then p.TrioStreak + 1 else 1
+	p.TrioDay = today
+	local best = 0
+	for _, q in p.Quests do
+		local d = def(q.Id)
+		if d then
+			best = math.max(best, Quests.reward(p, d))
+		end
+	end
+	local bonus = best * Config.TrioMult
+	p.Wins += bonus
+	p.TotalWins += bonus
+	local msg = "DAILY TRIO! +" .. Format.commas(bonus) .. " Wins (streak " .. p.TrioStreak .. ")"
+	if p.TrioStreak % Config.TrioStreakDays == 0 then
+		p.PotionLeft += Config.PotionSeconds
+		msg ..= " + free 3x Speed Potion!"
+	end
+	if notify then
+		notify(player, "daily", msg)
+	end
+end
+Quests.checkTrio = checkTrio
 
 -- Server-side progress event. `amount` defaults to 1.
 function Quests.event(player: Player, event: string, amount: number?)
@@ -128,11 +171,12 @@ function Quests.claim(player: Player, raw: any)
 	local wins = Quests.reward(p, d)
 	p.Wins += wins
 	p.TotalWins += wins
-	State.sync(player)
-	Quests.sync(player)
 	if notify then
 		notify(player, "buy", "Quest reward: +" .. Format.commas(wins) .. " Wins!")
 	end
+	checkTrio(player, p)
+	State.sync(player)
+	Quests.sync(player)
 end
 
 return Quests

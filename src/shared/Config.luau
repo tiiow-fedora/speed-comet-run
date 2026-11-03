@@ -70,16 +70,26 @@ end
 
 -- Daily quests (v2). One quest is drawn from each tier per UTC day. Rewards scale
 -- with the player's best stage: Mult x that stage's pad Wins (min 25).
-export type QuestDef = { Id: string, Text: string, Event: string, Target: number, Mult: number, Tier: number }
+export type QuestDef = { Id: string, Text: string, Event: string, Target: number, Mult: number, Tier: number, MinStage: number? }
 Config.QuestPool = {
 	{ Id = "pads15", Text = "Step on 15 Wins pads", Event = "pad", Target = 15, Mult = 2, Tier = 1 },
 	{ Id = "play10", Text = "Play for 10 minutes", Event = "play", Target = 600, Mult = 2, Tier = 1 },
 	{ Id = "restart5", Text = "Restart a lap 5 times", Event = "restart", Target = 5, Mult = 2, Tier = 1 },
+	{ Id = "shards20", Text = "Collect 20 Comet Shards", Event = "shard", Target = 20, Mult = 2, Tier = 1 },
 	{ Id = "pads40", Text = "Step on 40 Wins pads", Event = "pad", Target = 40, Mult = 4, Tier = 2 },
 	{ Id = "play25", Text = "Play for 25 minutes", Event = "play", Target = 1500, Mult = 4, Tier = 2 },
-	{ Id = "finish1", Text = "Reach the FINISH", Event = "finish", Target = 1, Mult = 8, Tier = 3 },
+	{ Id = "shards50", Text = "Collect 50 Comet Shards", Event = "shard", Target = 50, Mult = 4, Tier = 2 },
+	{ Id = "newboots", Text = "Buy a new pair of Boots", Event = "boots", Target = 1, Mult = 4, Tier = 2, MinStage = 1 },
+	{ Id = "adopt", Text = "Adopt a new Companion", Event = "companion", Target = 1, Mult = 4, Tier = 2, MinStage = 2 },
+	{ Id = "finish1", Text = "Reach the FINISH", Event = "finish", Target = 1, Mult = 8, Tier = 3, MinStage = 6 },
 	{ Id = "pads80", Text = "Step on 80 Wins pads", Event = "pad", Target = 80, Mult = 8, Tier = 3 },
+	{ Id = "shards100", Text = "Collect 100 Comet Shards", Event = "shard", Target = 100, Mult = 8, Tier = 3 },
+	{ Id = "rebirth1", Text = "Rebirth once", Event = "rebirth", Target = 1, Mult = 8, Tier = 3, MinStage = 5 },
 } :: { QuestDef }
+-- v4: claiming all three quests in one UTC day completes the "Daily Trio": a bonus (x TrioMult of the
+-- best quest reward) and a streak. Seven days in a row also gives a free potion.
+Config.TrioMult = 2
+Config.TrioStreakDays = 7
 Config.QuestMinBase = 25
 
 -- Comet Shards (v3): pickups along stages 1-3, once per lap, +Speed = max(ShardMin, gain x ShardSeconds)
@@ -115,6 +125,46 @@ end
 function Config.EventEndsAt(t: number): number
 	return (Config.WeekIndex(t) + 1) * 604800 - 3 * 86400
 end
+
+-- Companions (v4): bought once with Wins, never random, never paid. One is equipped at a time and adds
+-- Bonus to Speed gain (x(1 + Bonus)). They persist through rebirth like Boots.
+export type Companion = { Id: string, Name: string, Cost: number, Bonus: number, Color: Color3, Glow: Color3, Kind: string, Blurb: string }
+Config.Companions = {
+	{ Id = "glowbug", Name = "Glow Bug", Cost = 150, Bonus = 0.10, Color = Color3.fromRGB(150, 255, 120), Glow = Color3.fromRGB(230, 255, 140), Kind = "bug", Blurb = "A tiny lantern bug" },
+	{ Id = "cometpup", Name = "Comet Pup", Cost = 1000, Bonus = 0.25, Color = Color3.fromRGB(255, 170, 90), Glow = Color3.fromRGB(255, 230, 120), Kind = "pup", Blurb = "Chases its own tail" },
+	{ Id = "starfox", Name = "Star Fox", Cost = 6000, Bonus = 0.50, Color = Color3.fromRGB(255, 120, 190), Glow = Color3.fromRGB(255, 240, 250), Kind = "fox", Blurb = "Fast and fluffy" },
+	{ Id = "nebulacat", Name = "Nebula Cat", Cost = 40000, Bonus = 1.00, Color = Color3.fromRGB(165, 110, 255), Glow = Color3.fromRGB(120, 220, 255), Kind = "cat", Blurb = "Purrs in starlight" },
+	{ Id = "voiddragon", Name = "Void Dragon", Cost = 250000, Bonus = 2.00, Color = Color3.fromRGB(70, 60, 140), Glow = Color3.fromRGB(255, 150, 60), Kind = "dragon", Blurb = "Tiny, proud, fiery" },
+} :: { Companion }
+
+-- Server goal (v4): every Comet Shard anyone collects fills one shared bar. When it fills, everyone on the
+-- server gets BoostMult Speed gain for BoostSeconds. Target grows with the player count so it stays reachable.
+Config.Goal = { BaseTarget = 30, PerPlayer = 15, MaxTarget = 150, BoostSeconds = 120, BoostMult = 1.5 }
+function Config.GoalTarget(players: number): number
+	return math.min(Config.Goal.MaxTarget, Config.Goal.BaseTarget + Config.Goal.PerPlayer * math.max(players - 1, 0))
+end
+
+-- Playtime gifts (v4): cumulative minutes played today (UTC day). Reward Wins = Mult x max(QuestMinBase, best stage Wins).
+export type Gift = { Minutes: number, Mult: number, PotionSeconds: number }
+Config.Gifts = {
+	{ Minutes = 3, Mult = 1, PotionSeconds = 0 },
+	{ Minutes = 8, Mult = 2, PotionSeconds = 0 },
+	{ Minutes = 15, Mult = 3, PotionSeconds = 0 },
+	{ Minutes = 25, Mult = 5, PotionSeconds = 120 },
+	{ Minutes = 40, Mult = 8, PotionSeconds = 0 },
+	{ Minutes = 60, Mult = 12, PotionSeconds = 300 },
+} :: { Gift }
+
+-- Per-zone sky tint (v4): the client eases the Atmosphere/ambient toward the zone the player is in.
+export type ZoneSky = { Haze: Color3, Decay: Color3, Ambient: Color3 }
+Config.ZoneSky = {
+	{ Haze = Color3.fromRGB(150, 110, 255), Decay = Color3.fromRGB(255, 150, 210), Ambient = Color3.fromRGB(150, 140, 190) }, -- Moon
+	{ Haze = Color3.fromRGB(255, 140, 90), Decay = Color3.fromRGB(255, 190, 110), Ambient = Color3.fromRGB(190, 140, 120) }, -- Mars
+	{ Haze = Color3.fromRGB(110, 190, 255), Decay = Color3.fromRGB(190, 240, 255), Ambient = Color3.fromRGB(130, 160, 200) }, -- Ice
+	{ Haze = Color3.fromRGB(210, 110, 255), Decay = Color3.fromRGB(255, 130, 230), Ambient = Color3.fromRGB(170, 130, 200) }, -- Nebula
+	{ Haze = Color3.fromRGB(255, 190, 80), Decay = Color3.fromRGB(255, 120, 70), Ambient = Color3.fromRGB(200, 160, 110) }, -- Star Core
+	{ Haze = Color3.fromRGB(120, 100, 255), Decay = Color3.fromRGB(255, 160, 90), Ambient = Color3.fromRGB(140, 130, 200) }, -- Event Horizon
+} :: { ZoneSky }
 
 Config.FriendBoostPer = 0.10
 Config.FriendBoostMax = 0.30

@@ -17,6 +17,8 @@ local RateLimit = require(script.Parent.RateLimit)
 local Gameplay = require(script.Parent.Gameplay)
 local Shop = require(script.Parent.Shop)
 local Monetization = require(script.Parent.Monetization)
+local Goal = require(script.Parent.Goal)
+local Gifts = require(script.Parent.Gifts)
 
 StarterPlayer.CharacterUseJumpPower = false
 StarterPlayer.CharacterJumpHeight = Config.JumpHeight
@@ -45,6 +47,9 @@ local tutorialDone = remote("TutorialDone")
 local restartLap = remote("RestartLap")
 local setSlow = remote("SetSlow")
 local claimQuest = remote("ClaimQuest")
+local buyPet = remote("BuyPet")
+local equipPet = remote("EquipPet")
+local claimGift = remote("ClaimGift")
 remotes.Parent = ReplicatedStorage
 
 local function guarded(name: string, rate: number, fn: (Player, ...any) -> ())
@@ -69,6 +74,9 @@ restartLap.OnServerEvent:Connect(guarded("RestartLap", 0.5, function(player: Pla
 	Quests.event(player, "restart", 1)
 end))
 claimQuest.OnServerEvent:Connect(guarded("ClaimQuest", 2, Quests.claim))
+buyPet.OnServerEvent:Connect(guarded("BuyPet", 3, Shop.buyPet))
+equipPet.OnServerEvent:Connect(guarded("EquipPet", 3, Shop.equipPet))
+claimGift.OnServerEvent:Connect(guarded("ClaimGift", 3, Gifts.claim))
 setSlow.OnServerEvent:Connect(guarded("SetSlow", 2, function(player: Player, on: any)
 	Gameplay.setSlow(player, on == true)
 end))
@@ -82,6 +90,10 @@ end))
 
 Gameplay.start(layout, notify)
 Quests.setNotify(Gameplay.notify)
+Gifts.setNotify(Gameplay.notify)
+Goal.setAnnounce(function(text: string)
+	Gameplay.broadcast("goal", text)
+end)
 Monetization.start()
 
 local function onPlayerAdded(player: Player)
@@ -101,6 +113,7 @@ local function onPlayerAdded(player: Player)
 	if prof then
 		Quests.ensure(player, prof)
 		Quests.sync(player)
+		Gifts.sync(player)
 	end
 	player:SetAttribute("Loaded", true)
 	if firstJoin then

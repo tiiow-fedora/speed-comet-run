@@ -30,6 +30,14 @@ export type Profile = {
 	BestSpeed: number,
 	QuestDay: number,
 	Quests: { { Id: string, P: number, C: boolean } },
+	-- v4 fields (added 2026-11). Old saves get these defaults from reconcile(); nothing existing is renamed.
+	Pets: { [string]: boolean }, -- owned companion indexes as string keys
+	Pet: number, -- equipped companion index (0 = none)
+	TrioDay: number, -- UTC day on which the Daily Trio (all 3 quests) was last completed
+	TrioStreak: number, -- consecutive UTC days with a completed Trio
+	GiftDay: number, -- UTC day the playtime-gift counters below belong to
+	GiftSeconds: number, -- seconds played on GiftDay
+	GiftClaims: { [string]: boolean }, -- claimed gift indexes on GiftDay
 }
 
 local function defaultProfile(): Profile
@@ -50,6 +58,13 @@ local function defaultProfile(): Profile
 		BestSpeed = 0,
 		QuestDay = 0,
 		Quests = {},
+		Pets = {},
+		Pet = 0,
+		TrioDay = 0,
+		TrioStreak = 0,
+		GiftDay = 0,
+		GiftSeconds = 0,
+		GiftClaims = {},
 	}
 end
 

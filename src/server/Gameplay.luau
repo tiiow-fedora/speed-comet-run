@@ -13,6 +13,8 @@ local State = require(script.Parent.State)
 local Passes = require(script.Parent.Passes)
 local MapBuilder = require(script.Parent.MapBuilder)
 local Quests = require(script.Parent.Quests)
+local Goal = require(script.Parent.Goal)
+local Gifts = require(script.Parent.Gifts)
 
 local Gameplay = {}
 
@@ -54,6 +56,13 @@ function Gameplay.welcomeIfNew(player: Player): boolean
 	return false
 end
 
+-- Same message of `kind` to every player on this server.
+function Gameplay.broadcast(kind: string, text: string)
+	for p in runtime do
+		notify:FireClient(p, kind, text)
+	end
+end
+
 -- Server-wide toast for everyone except `except` (who gets their own message).
 function Gameplay.announce(text: string, except: Player?)
 	for p in runtime do
@@ -80,6 +89,11 @@ function Gameplay.multiplier(player: Player, p: DataService.Profile): number
 		m *= 1 + math.min(rt.friends * Config.FriendBoostPer, Config.FriendBoostMax)
 	end
 	m *= Config.CurrentEvent().SpeedMult
+	local pet = Config.Companions[p.Pet]
+	if pet then
+		m *= 1 + pet.Bonus
+	end
+	m *= Goal.multiplier()
 	return m
 end
 
@@ -279,6 +293,8 @@ local function checkPlayer(player: Player, rt: Runtime, p: DataService.Profile)
 				p.Speed += amount
 				State.syncSpeed(player, p)
 				Gameplay.notify(player, "shard", "+" .. Format.short(amount) .. " ⚡", { id = sh.Id })
+				Quests.event(player, "shard", 1)
+				Goal.add(1)
 			end
 		end
 	end
@@ -326,11 +342,13 @@ function Gameplay.addPlayer(player: Player)
 	}
 	player:SetAttribute("Checkpoint", 0)
 	refreshFriends()
+	Goal.refresh()
 end
 
 function Gameplay.removePlayer(player: Player)
 	runtime[player] = nil
 	refreshFriends()
+	task.delay(1, Goal.refresh) -- Players:GetPlayers() still lists the leaver during PlayerRemoving
 end
 
 function Gameplay.setSlow(player: Player, on: boolean)
@@ -375,6 +393,7 @@ function Gameplay.start(builtLayout: MapBuilder.Layout, notifyRemote: RemoteEven
 					if p.PotionLeft > 0 then
 						p.PotionLeft = math.max(0, p.PotionLeft - 1)
 					end
+					Gifts.tick(player, p)
 					player:SetAttribute("Gain", m)
 					State.syncSpeed(player, p)
 					Gameplay.applyWalkSpeed(player, p)

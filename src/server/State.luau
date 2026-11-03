@@ -9,6 +9,16 @@ local DataService = require(script.Parent.DataService)
 
 local State = {}
 
+local function ownedPets(p: DataService.Profile): string
+	local list = {}
+	for i = 1, #Config.Companions do
+		if p.Pets[tostring(i)] then
+			table.insert(list, tostring(i))
+		end
+	end
+	return table.concat(list, ",")
+end
+
 local function ownedString(p: DataService.Profile): string
 	local list = {}
 	for i = 1, #Config.Boots do
@@ -41,6 +51,8 @@ function State.sync(player: Player)
 	player:SetAttribute("Rebirths", p.Rebirths)
 	player:SetAttribute("Boot", p.Boot)
 	player:SetAttribute("OwnedBoots", ownedString(p))
+	player:SetAttribute("Pet", p.Pet)
+	player:SetAttribute("OwnedPets", ownedPets(p))
 	player:SetAttribute("PotionLeft", math.floor(p.PotionLeft))
 	player:SetAttribute("BestStage", p.BestStage)
 	player:SetAttribute("TutorialDone", p.TutorialDone)
