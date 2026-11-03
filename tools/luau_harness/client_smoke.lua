@@ -16,7 +16,7 @@ local test = function()
 	-- remotes the client expects
 	local remotes = M.inst("Folder", "Remotes")
 	local fired = {}
-	for _, n in ipairs({ "Notify", "BuyBoot", "EquipBoot", "Rebirth", "ClaimDaily", "TutorialDone", "RestartLap", "SetSlow", "ClaimQuest", "BuyPet", "EquipPet", "ClaimGift" }) do
+	for _, n in ipairs({ "Notify", "BuyBoot", "EquipBoot", "Rebirth", "ClaimDaily", "TutorialDone", "RestartLap", "SetSlow", "ClaimQuest", "BuyPet", "EquipPet", "ClaimGift", "HighFive" }) do
 		local r = M.inst("RemoteEvent", n); r.FireServer = function(_, ...) table.insert(fired, { n, ... }) end; r.OnClientEvent = M.Signal.new(); r.Parent = remotes
 	end
 	remotes.Parent = RS
@@ -35,7 +35,7 @@ local test = function()
 		p.Activated = M.Signal.new(); p.MouseButton1Click = M.Signal.new(); p.InputBegan = M.Signal.new(); p.Changed = M.Signal.new()
 		p.AbsoluteSize = { X = 1280, Y = 720 }; p.TextBounds = { X = 100, Y = 20 }; p.AbsolutePosition = { X = 0, Y = 0 }
 		p.GetPropertyChangedSignal = function() return M.Signal.new() end
-		p.Play = function() end
+		p.Play = function() end; p.Triggered = M.Signal.new()
 		return o
 	end
 	M.globals.Instance.new = M.globals.Instance.new
@@ -64,7 +64,7 @@ local test = function()
 	local function panelNamed(name)
 		for _, d in ipairs(gui:GetDescendants()) do if d.Name == name then return d end end
 	end
-	for _, n in ipairs({ "ShopPanel", "PetsPanel", "StorePanel", "DailyPanel", "QuestsPanel", "RebirthPanel" }) do
+	for _, n in ipairs({ "ShopPanel", "PetsPanel", "StorePanel", "DailyPanel", "QuestsPanel", "RebirthPanel", "TrophiesPanel" }) do
 		check("panel built: " .. n, panelNamed(n) ~= nil)
 	end
 
@@ -72,7 +72,7 @@ local test = function()
 	local states = {
 		{ Speed = 0, Wins = 0, Pet = 0, OwnedPets = "", GiftSec = 0, GiftClaimed = "", GiftReady = false },
 		{ Speed = 5000, Wins = 200, Pet = 1, OwnedPets = "1", GiftSec = 200, GiftClaimed = "", GiftReady = true, Checkpoint = 2, BestStage = 2 },
-		{ Speed = 1e9, Wins = 1e9, Pet = 5, OwnedPets = "1,2,3,4,5", GiftSec = 4000, GiftClaimed = "1,2,3", GiftReady = true, Checkpoint = 15, BestStage = 15, Rebirths = 3, Gain = 1234567 },
+		{ Speed = 1e9, Wins = 1e9, Pet = 5, OwnedPets = "1,2,3,4,5", GiftSec = 4000, GiftClaimed = "1,2,3", GiftReady = true, Checkpoint = 15, BestStage = 15, Rebirths = 3, Gain = 1234567, TrophyData = "15,2,600,5,10,3,4,700,2", TrophiesDone = "1,2,3,8,10" },
 	}
 	for i, st in ipairs(states) do
 		for k, v in pairs(st) do plr:SetAttribute(k, v) end
@@ -85,7 +85,7 @@ local test = function()
 		check("next goal text state " .. i, type(Hud.nextGoal()) == "string" or Hud.nextGoal() == nil)
 	end
 	-- panels only refresh while open: open each one (openPanel toggles, so open -> next one closes it)
-	for _, n in ipairs({ "Shop", "Pets", "Store", "Daily", "Quests", "Rebirth" }) do Hud.openPanel(n) end
+	for _, n in ipairs({ "Shop", "Pets", "Store", "Daily", "Quests", "Trophies", "Rebirth" }) do Hud.openPanel(n) end
 	-- the last state (everything owned, boost running) must be reflected in the UI texts
 	local function anyText(sub)
 		for _, d in ipairs(gui:GetDescendants()) do
@@ -100,6 +100,9 @@ local test = function()
 	check("UI shows a ready gift", anyText("CLAIM"))
 	check("UI shows quest text + trio line", anyText("Collect 20 Comet Shards") and anyText("DAILY TRIO done today"))
 	check("UI shows companion chip", anyText("Void Dragon +200%"))
+	check("trophies panel shows done + progress", anyText("5 / 24 trophies") or anyText("5 / " .. #Config.Trophies .. " trophies"))
+	check("trophies panel shows a progress row", anyText("600 / 5.00K"))
+	check("rebirth panel shows head start, star line and next title", anyText("Head start") and anyText("a star") and anyText("Next title at Rebirth 5"))
 	check("store shows live Speed Burst amount", anyText("Speed now (5 min of your gain)"))
 	-- button handlers: click every Activated signal in the panels
 	local clicks = 0
@@ -123,6 +126,24 @@ local test = function()
 		end
 		check("Pets.build(" .. i .. ") parts>=6 non-colliding", parts >= 6 and bad == 0 and m.PrimaryPart ~= nil, parts .. "/" .. bad)
 	end
+	-- client Social: a prompt is attached to another player's character and fires the HighFive remote
+	local Social = M.require(M.clientDir.Social)
+	local other, ohrp = M.newPlayer("Other")
+	other.Parent = Players
+	other.Character.Parent = nil
+	local hfFired = 0
+	local hf = RS.Remotes:FindFirstChild("HighFive")
+	hf.FireServer = function(_, target) hfFired = hfFired + 1; assert(target == other) end
+	Social.start()
+	local prompt = ohrp:FindFirstChild("HighFivePrompt")
+	check("high-five prompt attached to the other player's root part", prompt ~= nil and prompt.ActionText == "High five")
+	if prompt then
+		prompt.Triggered:Fire()
+		check("triggering the prompt fires the remote once and locks it briefly", hfFired == 1 and prompt.Enabled == false)
+	end
+	-- previewCamera never errors, with a bad bounding box too
+	local cf = Pets.previewCamera(Pets.build(1), 32)
+	check("Pets.previewCamera returns a CFrame", cf ~= nil)
 	-- Ambience zone lookup
 	local Amb = M.require(M.clientDir.Ambience)
 	local zs = {}

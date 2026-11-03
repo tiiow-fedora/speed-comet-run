@@ -96,6 +96,16 @@ function Leaderboard.build(parent: Instance)
 		Color3.fromRGB(80, 220, 255),
 		parent
 	)
+	-- v5: third board, further along the same side
+	makeBoard(
+		"TopRebirths",
+		"CometRun_TopRebirths_v1",
+		"🔁 TOP REBIRTHS",
+		"Most rebirths, all servers",
+		CFrame.new(W / 2 + 40, Y + 13, 62) * CFrame.Angles(0, math.rad(65), 0),
+		Color3.fromRGB(255, 90, 220),
+		parent
+	)
 end
 
 -- Kept for compatibility with existing callers: submits Total Wins.

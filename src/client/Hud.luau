@@ -74,6 +74,28 @@ local function claimedGiftSet(): { [number]: boolean }
 	return t
 end
 
+-- TrophyData is "v1,v2,..." in Config.TrophyStats order; TrophiesDone is the comma-separated indexes already awarded.
+local function trophyStats(): { [string]: number }
+	local out: { [string]: number } = {}
+	local i = 0
+	for s in string.gmatch(attr("TrophyData", ""), "[^,]+") do
+		i += 1
+		local name = Config.TrophyStats[i]
+		if name then
+			out[name] = tonumber(s) or 0
+		end
+	end
+	return out
+end
+
+local function trophiesDoneSet(): { [number]: boolean }
+	local t = {}
+	for s in string.gmatch(attr("TrophiesDone", ""), "%d+") do
+		t[tonumber(s) :: number] = true
+	end
+	return t
+end
+
 -- Same scale the server uses for quest and gift rewards (Quests.winsFor), without event multipliers.
 local function rewardScale(mult: number): number
 	local st = Config.Stages[math.clamp(attr("BestStage", 0), 1, #Config.Stages)]
@@ -257,9 +279,9 @@ end
 
 local function buildRebirth()
 	local _, list = makePanel("Rebirth", "🔁 REBIRTH", Theme.Pink)
-	local r = row(list, 1, 150)
+	local r = row(list, 1, 214)
 	local info = Theme.label({
-		Size = UDim2.new(1, -24, 0, 90),
+		Size = UDim2.new(1, -24, 0, 150),
 		Position = UDim2.fromOffset(12, 8),
 		Font = Theme.BodyFont,
 		TextWrapped = true,
@@ -281,13 +303,21 @@ local function buildRebirth()
 	table.insert(refreshers, function()
 		local reb = attr("Rebirths", 0)
 		local cost = Config.RebirthCost(reb)
-		info.Text = string.format(
-			"Reset Speed and Wins (you keep your Boots) for a permanent boost.\nNow: x%d   →   After: x%d Speed gain\nNeeds ⚡ %s Speed (you have %s)",
-			1 + reb,
-			2 + reb,
-			Format.commas(cost),
-			Format.commas(attr("Speed", 0))
-		)
+		local nowMult = (1 + reb) * Config.StarMult(reb)
+		local afterMult = (2 + reb) * Config.StarMult(reb + 1)
+		local title = Config.RebirthTitle(reb)
+		local nextM = Config.NextMilestone(reb)
+		local lines = {
+			"Reset Speed and Wins (you keep Boots and Companions) for a permanent boost.",
+			string.format("Now: x%s   →   After: x%s Speed gain   |   Head start: ⚡ %s", Format.short(nowMult), Format.short(afterMult), Format.short(Config.HeadStart(reb + 1))),
+			string.format("Needs ⚡ %s Speed (you have %s)", Format.commas(cost), Format.commas(attr("Speed", 0))),
+			string.format("Every %d rebirths: a star, +%d%% Speed gain.", Config.StarEvery, math.floor(Config.StarBonus * 100)),
+			if title then "Title: " .. title else "Your first rebirth earns the title Reborn.",
+		}
+		if nextM then
+			table.insert(lines, string.format("Next title at Rebirth %d: %s (Wins + free potion)", nextM.At, nextM.Title))
+		end
+		info.Text = table.concat(lines, "\n")
 		local ready = attr("Speed", 0) >= cost
 		b.BackgroundColor3 = if ready then Theme.Pink else Theme.PanelLight
 		b.Text = if ready then "REBIRTH" else "NOT YET"
@@ -682,6 +712,17 @@ local function buildQuests()
 		ZIndex = 22,
 		Parent = list,
 	})
+	local trophyBtn = Theme.button({
+		Text = "🏅 TROPHIES",
+		Size = UDim2.new(1, -12, 0, 40),
+		BackgroundColor3 = Theme.Gold,
+		LayoutOrder = 6,
+		ZIndex = 22,
+		Parent = list,
+	})
+	trophyBtn.Activated:Connect(function()
+		openPanel("Trophies")
+	end)
 	table.insert(refreshers, function()
 		local streak = attr("TrioStreak", 0)
 		trio.Text = if attr("TrioDone", false)
@@ -711,6 +752,61 @@ local function buildQuests()
 				end
 			end
 		end
+	end)
+end
+
+local function buildTrophies()
+	local _, list = makePanel("Trophies", "🏅 TROPHIES", Theme.Gold)
+	local head = Theme.label({
+		Size = UDim2.new(1, -12, 0, 40),
+		TextColor3 = Theme.Muted,
+		Font = Theme.BodyFont,
+		TextWrapped = true,
+		LayoutOrder = 0,
+		ZIndex = 22,
+		Parent = list,
+	})
+	local back = Theme.button({ Text = "← QUESTS", Size = UDim2.new(1, -12, 0, 36), BackgroundColor3 = Theme.Accent, LayoutOrder = 999, ZIndex = 22, Parent = list })
+	back.Activated:Connect(function()
+		openPanel("Quests")
+	end)
+	local rows = {}
+	for i, t in Config.Trophies do
+		local r = row(list, i, 56)
+		local title = Theme.label({ Text = t.Name, Size = UDim2.new(1, -200, 0, 24), Position = UDim2.fromOffset(12, 4), TextXAlignment = Enum.TextXAlignment.Left, ZIndex = 23, Parent = r })
+		local desc = Theme.label({
+			Text = t.Desc,
+			Size = UDim2.new(1, -200, 0, 20),
+			Position = UDim2.fromOffset(12, 30),
+			TextXAlignment = Enum.TextXAlignment.Left,
+			TextColor3 = Theme.Muted,
+			Font = Theme.BodyFont,
+			ZIndex = 23,
+			Parent = r,
+		})
+		local status = Theme.label({ Size = UDim2.fromOffset(180, 40), Position = UDim2.new(1, -190, 0, 8), TextXAlignment = Enum.TextXAlignment.Right, ZIndex = 23, Parent = r })
+		rows[i] = { title = title, desc = desc, status = status }
+	end
+	table.insert(refreshers, function()
+		local stats = trophyStats()
+		local done = trophiesDoneSet()
+		local n = 0
+		for i, t in Config.Trophies do
+			local rw = rows[i]
+			if done[i] then
+				n += 1
+				rw.status.Text = "DONE ✓"
+				rw.status.TextColor3 = Theme.Green
+				rw.title.TextColor3 = Theme.Gold
+			else
+				local v = math.min(stats[t.Stat] or 0, t.Target)
+				rw.status.Text = Format.short(v) .. " / " .. Format.short(t.Target) .. "  🏆 " .. Format.short(rewardScale(t.WinsMult))
+				rw.status.TextColor3 = Theme.Text
+				rw.title.TextColor3 = Theme.Text
+			end
+		end
+		local title = Config.RebirthTitle(attr("Rebirths", 0))
+		head.Text = n .. " / " .. #Config.Trophies .. " trophies. Free Wins for each one." .. (if title then "  Title: " .. title else "")
 	end)
 end
 
@@ -1209,6 +1305,7 @@ function Hud.build()
 	buildStore()
 	buildDaily()
 	buildQuests()
+	buildTrophies()
 
 	local function refreshAll()
 		refreshTop()
@@ -1246,6 +1343,8 @@ function Hud.build()
 			"GiftClaimed",
 			"TrioDone",
 			"TrioStreak",
+			"TrophyData",
+			"TrophiesDone",
 		}
 	do
 		player:GetAttributeChangedSignal(name):Connect(refreshAll)

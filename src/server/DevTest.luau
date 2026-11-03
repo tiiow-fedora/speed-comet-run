@@ -18,6 +18,7 @@ local Monetization = require(script.Parent.Monetization)
 local Quests = require(script.Parent.Quests)
 local Goal = require(script.Parent.Goal)
 local Gifts = require(script.Parent.Gifts)
+local Social = require(script.Parent.Social)
 
 local DevTest = {}
 
@@ -567,6 +568,24 @@ function DevTest.run()
 			local zMid = (Amb :: any).zoneAtZ(zs, layout.Stages[3].PadZ)
 			check("zone lookup by Z", z1 == 1 and zLast == Config.Stages[#Config.Stages].Zone and zMid == Config.Stages[3].Zone, z1 .. "," .. zMid .. "," .. zLast)
 		end
+	end
+
+	-- 22. v5: Aurora Reef, trophies, rebirth depth, high-fives
+	do
+		check("20 stages, 7 zones, sky per zone", #Config.Stages == 20 and #Config.Zones == 7 and #Config.ZoneSky == 7 and layout.Stages[20] ~= nil)
+		check("last stage is in Aurora Reef", Config.Zones[Config.Stages[20].Zone].Name == "Aurora Reef")
+		p.Trophies["hf1"] = nil
+		p.Stats.HighFives = 1
+		task.wait(1.3)
+		check("trophy awarded on the tick", p.Trophies["hf1"] == true)
+		check("trophy attributes replicated", (player:GetAttribute("TrophiesDone") or "") ~= "" and (player:GetAttribute("TrophyData") or "") ~= "")
+		check("high-five with yourself is rejected", Social.highFive(player, player) == false)
+		check("high-five with a non-player is rejected", Social.highFive(player, workspace) == false)
+		local before = p.Rebirths
+		p.Speed = Config.RebirthCost(before) + 5
+		Shop.rebirth(player)
+		check("rebirth gives the head start", p.Speed == Config.HeadStart(p.Rebirths) and p.Rebirths == before + 1, p.Speed)
+		task.wait(1.6)
 	end
 
 	-- restore

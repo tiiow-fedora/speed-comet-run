@@ -37,7 +37,8 @@ function Ambience.zoneAtZ(zs: { number }, z: number): number
 	return Config.Stages[#Config.Stages].Zone
 end
 
-function Ambience.start()
+-- onZone (optional) is called with the zone name when the player crosses into a different zone.
+function Ambience.start(onZone: ((string) -> ())?)
 	local atmosphere = Lighting:FindFirstChildOfClass("Atmosphere")
 	if not atmosphere then
 		return
@@ -56,6 +57,9 @@ function Ambience.start()
 				local zone = Ambience.zoneAtZ(zs, hrp.Position.Z)
 				local sky = Config.ZoneSky[zone]
 				if zone ~= current and sky then
+					if current ~= 0 and onZone and Config.Zones[zone] then
+						onZone(Config.Zones[zone].Name)
+					end
 					current = zone
 					local info = TweenInfo.new(2.5, Enum.EasingStyle.Sine, Enum.EasingDirection.InOut)
 					TweenService:Create(atmosphere, info, { Color = sky.Haze, Decay = sky.Decay }):Play()

@@ -16,6 +16,7 @@ local Hud = require(script.Parent.Hud)
 local Gates = require(script.Parent.Gates)
 local Pets = require(script.Parent.Pets)
 local Ambience = require(script.Parent.Ambience)
+local Social = require(script.Parent.Social)
 
 local player = Players.LocalPlayer
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -27,7 +28,10 @@ end
 Hud.build()
 Sfx.startMusic()
 Pets.start()
-Ambience.start()
+Ambience.start(function(zoneName: string)
+	Hud.toast("Entering " .. zoneName, Theme.Accent)
+end)
+Social.start()
 
 -- ===== onboarding =====
 -- Steps: 1 run to gate, 2 gate open -> go through to the pad, 3 got wins -> open the shop, done.
@@ -367,6 +371,14 @@ remotes.Notify.OnClientEvent:Connect(function(kind: string, text: string, extra:
 		Sfx.play("rebirth")
 		Hud.toast(text, Color3.fromRGB(255, 240, 120))
 		burstAtCharacter(Color3.fromRGB(255, 240, 120), 60)
+	elseif kind == "trophy" then
+		Sfx.play("rebirth")
+		Hud.toast("🏅 " .. text, Theme.Gold)
+		burstAtCharacter(Theme.Gold, 50)
+	elseif kind == "highfive" then
+		Sfx.play("buy")
+		Hud.toast(text, Theme.Green)
+		burstAtCharacter(Color3.fromRGB(255, 220, 120), 30)
 	elseif kind == "gift" then
 		Sfx.play("gate")
 		Hud.toast(text, Theme.Green)
@@ -420,8 +432,16 @@ TextChatService.OnIncomingMessage = function(message: TextChatMessage)
 	local src = message.TextSource
 	if src then
 		local plr = Players:GetPlayerByUserId(src.UserId)
-		if plr and plr:GetAttribute("Pass_VIP") then
-			props.PrefixText = '<font color="#FFD23C">[VIP]</font> ' .. message.PrefixText
+		if plr then
+			local prefix = message.PrefixText
+			local title = Config.RebirthTitle((plr:GetAttribute("Rebirths") :: number?) or 0)
+			if title then
+				prefix = '<font color="#FF5AE0">[' .. title .. "]</font> " .. prefix
+			end
+			if plr:GetAttribute("Pass_VIP") then
+				prefix = '<font color="#FFD23C">[VIP]</font> ' .. prefix
+			end
+			props.PrefixText = prefix
 		end
 	end
 	return props
