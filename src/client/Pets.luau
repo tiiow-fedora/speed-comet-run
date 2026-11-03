@@ -123,6 +123,23 @@ function Pets.build(index: number): Model
 	return model
 end
 
+-- Camera for the preview icons: frames the model's bounding box from the front-right, whatever its size
+-- (so a long tail or tall ears can never be cropped). Falls back to a fixed view if the box is unusable.
+function Pets.previewCamera(model: Model, fov: number): CFrame
+	local ok, cf, size = pcall(function()
+		return model:GetBoundingBox()
+	end)
+	local fallback = CFrame.lookAt(Vector3.new(1.4, 1.6, -7.5), Vector3.new(0, 0.2, 0))
+	if not ok or typeof(cf) ~= "CFrame" or typeof(size) ~= "Vector3" or size.Magnitude < 0.1 then
+		return fallback
+	end
+	local center = (cf :: CFrame).Position
+	local radius = (size :: Vector3).Magnitude * 0.5
+	local dist = radius / math.tan(math.rad(fov) * 0.5) * 1.1
+	local dir = Vector3.new(0.22, 0.22, -1).Unit
+	return CFrame.lookAt(center + dir * dist, center)
+end
+
 local function petFolder(): Folder
 	if not folder or not folder.Parent then
 		local f = Instance.new("Folder")

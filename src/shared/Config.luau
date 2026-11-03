@@ -81,7 +81,7 @@ Config.QuestPool = {
 	{ Id = "shards50", Text = "Collect 50 Comet Shards", Event = "shard", Target = 50, Mult = 4, Tier = 2 },
 	{ Id = "newboots", Text = "Buy a new pair of Boots", Event = "boots", Target = 1, Mult = 4, Tier = 2, MinStage = 1 },
 	{ Id = "adopt", Text = "Adopt a new Companion", Event = "companion", Target = 1, Mult = 4, Tier = 2, MinStage = 2 },
-	{ Id = "finish1", Text = "Reach the FINISH", Event = "finish", Target = 1, Mult = 8, Tier = 3, MinStage = 6 },
+	{ Id = "finish1", Text = "Reach the FINISH", Event = "finish", Target = 1, Mult = 8, Tier = 3, MinStage = 19 },
 	{ Id = "pads80", Text = "Step on 80 Wins pads", Event = "pad", Target = 80, Mult = 8, Tier = 3 },
 	{ Id = "shards100", Text = "Collect 100 Comet Shards", Event = "shard", Target = 100, Mult = 8, Tier = 3 },
 	{ Id = "rebirth1", Text = "Rebirth once", Event = "rebirth", Target = 1, Mult = 8, Tier = 3, MinStage = 5 },

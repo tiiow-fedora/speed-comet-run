@@ -333,12 +333,12 @@ local function buildPets()
 		}, { Theme.corner(10) })
 		local cam = Instance.new("Camera")
 		cam.FieldOfView = 32
-		cam.CFrame = CFrame.lookAt(Vector3.new(1.4, 1.6, -7.5), Vector3.new(0, 0.2, 0))
 		cam.Parent = vp
 		vp.CurrentCamera = cam
 		local model = Pets.build(i)
 		model:PivotTo(CFrame.new())
 		model.Parent = vp
+		cam.CFrame = Pets.previewCamera(model, cam.FieldOfView)
 		Theme.label({
 			Text = pet.Name,
 			Size = UDim2.new(1, -250, 0, 28),
@@ -779,8 +779,8 @@ local function buildTop()
 	-- v3 galaxy progress strip: one dot per stage in its zone color; filled = reached
 	local strip = new("Frame", {
 		Name = "GalaxyStrip",
-		Size = UDim2.fromOffset(15 * 20, 14),
-		Position = UDim2.fromOffset(150, 130),
+		Size = UDim2.fromOffset(#Config.Stages * 20, 14),
+		Position = UDim2.fromOffset(150, 100),
 		BackgroundTransparency = 1,
 		Parent = top,
 	})
@@ -799,15 +799,17 @@ local function buildTop()
 	end
 
 	boostRow = new("Frame", {
-		Size = UDim2.fromOffset(600, 24),
-		Position = UDim2.fromOffset(0, 102),
+		Size = UDim2.fromOffset(600, 48),
+		Position = UDim2.fromOffset(0, 116),
 		BackgroundTransparency = 1,
 		Parent = top,
 	})
+	-- chips wrap onto a second row (4 per row) instead of spilling past the screen edges when 5+ boosts show
 	new("UIListLayout", {
 		FillDirection = Enum.FillDirection.Horizontal,
 		HorizontalAlignment = Enum.HorizontalAlignment.Center,
 		SortOrder = Enum.SortOrder.LayoutOrder,
+		Wraps = true,
 		Padding = UDim.new(0, 8),
 		Parent = boostRow,
 	})
@@ -1095,7 +1097,7 @@ local function refreshTop()
 	for i, bdef in boosts do
 		local l = labels[i]
 		if not l then
-			l = Theme.label({ Size = UDim2.fromOffset(150, 22), LayoutOrder = i, Parent = boostRow })
+			l = Theme.label({ Size = UDim2.fromOffset(140, 22), LayoutOrder = i, Parent = boostRow })
 		end
 		l.Text = bdef[1] :: string
 		l.TextColor3 = bdef[2] :: Color3
@@ -1188,7 +1190,7 @@ function Hud.build()
 	hintFrame = new("Frame", {
 		Name = "Hint",
 		AnchorPoint = Vector2.new(0.5, 0),
-		Position = UDim2.new(0.5, 0, 0, 152),
+		Position = UDim2.new(0.5, 0, 0, 172),
 		Size = UDim2.fromOffset(440, 40),
 		BackgroundColor3 = Theme.Bg,
 		BackgroundTransparency = 0.1,
