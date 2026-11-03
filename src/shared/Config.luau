@@ -130,10 +130,10 @@ end
 -- Bonus to Speed gain (x(1 + Bonus)). They persist through rebirth like Boots.
 export type Companion = { Id: string, Name: string, Cost: number, Bonus: number, Color: Color3, Glow: Color3, Kind: string, Blurb: string }
 Config.Companions = {
-	{ Id = "glowbug", Name = "Glow Bug", Cost = 150, Bonus = 0.10, Color = Color3.fromRGB(150, 255, 120), Glow = Color3.fromRGB(230, 255, 140), Kind = "bug", Blurb = "A tiny lantern bug" },
-	{ Id = "cometpup", Name = "Comet Pup", Cost = 1000, Bonus = 0.25, Color = Color3.fromRGB(255, 170, 90), Glow = Color3.fromRGB(255, 230, 120), Kind = "pup", Blurb = "Chases its own tail" },
-	{ Id = "starfox", Name = "Star Fox", Cost = 6000, Bonus = 0.50, Color = Color3.fromRGB(255, 120, 190), Glow = Color3.fromRGB(255, 240, 250), Kind = "fox", Blurb = "Fast and fluffy" },
-	{ Id = "nebulacat", Name = "Nebula Cat", Cost = 40000, Bonus = 1.00, Color = Color3.fromRGB(165, 110, 255), Glow = Color3.fromRGB(120, 220, 255), Kind = "cat", Blurb = "Purrs in starlight" },
+	{ Id = "glowbug", Name = "Glow Bug", Cost = 100, Bonus = 0.10, Color = Color3.fromRGB(150, 255, 120), Glow = Color3.fromRGB(230, 255, 140), Kind = "bug", Blurb = "A tiny lantern bug" },
+	{ Id = "cometpup", Name = "Comet Pup", Cost = 800, Bonus = 0.25, Color = Color3.fromRGB(255, 170, 90), Glow = Color3.fromRGB(255, 230, 120), Kind = "pup", Blurb = "Chases its own tail" },
+	{ Id = "starfox", Name = "Star Fox", Cost = 5000, Bonus = 0.50, Color = Color3.fromRGB(255, 120, 190), Glow = Color3.fromRGB(255, 240, 250), Kind = "fox", Blurb = "Fast and fluffy" },
+	{ Id = "nebulacat", Name = "Nebula Cat", Cost = 30000, Bonus = 1.00, Color = Color3.fromRGB(165, 110, 255), Glow = Color3.fromRGB(120, 220, 255), Kind = "cat", Blurb = "Purrs in starlight" },
 	{ Id = "voiddragon", Name = "Void Dragon", Cost = 250000, Bonus = 2.00, Color = Color3.fromRGB(70, 60, 140), Glow = Color3.fromRGB(255, 150, 60), Kind = "dragon", Blurb = "Tiny, proud, fiery" },
 } :: { Companion }
 

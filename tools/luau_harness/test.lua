@@ -73,14 +73,14 @@ local test = function()
 	prof.Wins = 1200
 	remotes.BuyPet.OnServerEvent:Fire(p1, 2)
 	M.advance(0.1)
-	check("pet 2 bought via remote", prof.Pet == 2 and prof.Pets["2"] and prof.Wins == 200 and p1:GetAttribute("Pet") == 2 and p1:GetAttribute("OwnedPets") == "2", prof.Wins)
+	check("pet 2 bought via remote", prof.Pet == 2 and prof.Pets["2"] and prof.Wins == 1200 - Config.Companions[2].Cost and p1:GetAttribute("Pet") == 2 and p1:GetAttribute("OwnedPets") == "2", prof.Wins)
 	local s0 = prof.Speed
 	M.advance(4)
 	local gain = (prof.Speed - s0) / 4
 	check("pet bonus raises gain by 25%", math.abs(gain - 1.25) < 0.01, gain)
 	remotes.BuyPet.OnServerEvent:Fire(p1, "x"); remotes.BuyPet.OnServerEvent:Fire(p1, 0); remotes.BuyPet.OnServerEvent:Fire(p1, 7); remotes.EquipPet.OnServerEvent:Fire(p1, 4)
 	M.advance(0.1)
-	check("bad pet remote args ignored", prof.Pet == 2 and prof.Wins == 200)
+	check("bad pet remote args ignored", prof.Pet == 2 and prof.Wins == 1200 - Config.Companions[2].Cost)
 	remotes.EquipPet.OnServerEvent:Fire(p1, 0)
 	M.advance(0.1)
 	check("unequip via remote", prof.Pet == 0 and p1:GetAttribute("Pet") == 0)

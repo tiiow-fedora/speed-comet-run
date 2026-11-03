@@ -74,3 +74,49 @@ Currency and progress never come from the client. Speed is ticked by the server.
 - [x] Layouts: phone (iPhone 7), tablet (iPad 6th gen), desktop
 - [x] Performance: 1,195 map parts; live client ~241 FPS on this PC (Shift+F5). No real low-end device available (see report)
 - [x] Live v32: loads, bright map, shards + pad + gate work, all 8 purchases prompt (`tests/live_check_v32.md`)
+
+
+# V4 release checklist (cloud-burn branch, NOT yet run in Studio)
+
+Written in a Linux container with no Roblox Studio. What was and was not checked there:
+
+## Checked offline (`tools/run_checks.sh`, all passing at the last commit)
+| Check | Tool | Result |
+|---|---|---|
+| Project builds | `rojo build` | OK |
+| Lint | `selene src` (`selene.toml`, `roblox_min.yml`) | 0 errors, 0 warnings |
+| Format | `stylua --check src` (`stylua.toml`: width 200, tabs, LF) | clean |
+| Syntax of every file | Luau compiler through `tools/luau_harness --check` | 24/24 compile |
+| Server logic | `tools/luau_harness/test.lua`: the real `Main.server` + Gameplay/Shop/Quests/Gifts/Goal/DataService against a Roblox mock, driving the real remotes | 37/37 |
+| Client smoke | `tools/luau_harness/client_smoke.lua`: builds the real HUD against a permissive mock, opens every panel under 3 attribute states, clicks every button | 30/30 |
+| Studio self test, in the mock | `tools/luau_harness/devtest.lua`: the real `DevTest.luau` incl. the new v4 checks | 98 pass; 6 skipped (5 receipt checks need a DataStore save, 1 needs the imported Blender meshes) |
+
+The mock does not simulate physics, rendering, layout, real DataStores, MarketplaceService or real Roblox types. A pass there means the logic runs and the numbers add up. It says nothing about how anything looks or feels.
+
+## To run in Studio before publishing
+1. `rojo serve` (or `rojo build -o CometRun.rbxl`), open, press Play. Run `game.ServerScriptService.DevRun:Invoke()` from the command bar. Expect 0 FAIL and roughly 115 PASS (v3 had 58; v4 adds about 50 checks in sections 17-21 plus a changed pad check). The 6 checks that the mock skips (5 receipt checks, landmark meshes) must PASS in Studio.
+2. Repeat with Test > Clients and Servers, 2 players, and once in the iPhone 7 emulator (667x375).
+3. UI by eye, desktop and phone emulator:
+   - SHOP button (was BOOTS): the pink "COMPANIONS" row opens the Companions panel; "BOOTS" row at the bottom returns.
+   - Companions panel: five rows with 3D previews (ViewportFrame). Camera framing was never seen in Studio; adjust `cam.CFrame` in `Hud.buildPets` if a model is cropped.
+   - Buy a companion with Wins: it appears next to your character, floats, keeps up at 100+ studs/s, and shows on other players' screens.
+   - DAILY panel is now "DAILY & GIFTS": streak strip, claim row, six gift rows with countdowns.
+   - QUESTS panel: new text line at the bottom about the Daily Trio.
+   - Boost chips under the top bar: "Shards N/M" chip, companion chip, Premium chip (only with a Premium account). Check they don't overflow on the phone emulator when 5+ chips show.
+   - Zone sky: run past a gate into the next zone; the haze/ambient color eases over about 2.5 s.
+   - Scenery: clouds, glowing orbs, pennant flags near each Wins pad. Look for anything blocking the track or clipping.
+4. Companion follow quality at high speed (set Speed to 1e6 with the Studio command bar, run down the track).
+5. Shared goal with 2 clients: collect shards on both until the bar fills; both clients should get the "COMET BOOST" toast and the boost chip with a countdown.
+6. Playtime gifts: join, wait 3 minutes (or set `GiftSeconds` in DevTest), claim; rejoin and confirm the claimed state and the timer persist.
+7. Save/load: buy a companion, claim a gift, leave and rejoin. `Pet`, `Pets`, `GiftClaims`, `TrioStreak` must persist. Also load an account saved by v32 (any existing profile): everything old must be intact and the new fields default to empty.
+8. Performance: map part count printed in Output at startup (offline estimate about 1,530; v3 was 1,195). Check FPS on the phone emulator.
+9. Live check after publishing: join, collect a shard, buy the first companion, claim a gift, and confirm every pass/product still prompts (`tests/live_check_v32.md` is the template).
+
+## New remotes (audit)
+| Remote | Client sends | Server validation | Rate limit |
+|---|---|---|---|
+| BuyPet | companion index | integer 1..#Companions, Wins >= cost (owned -> equips instead) | 3/s, burst 4 |
+| EquipPet | companion index or 0 | integer 0..#Companions, must own (0 = none) | 3/s |
+| ClaimGift | gift index | integer 1..#Gifts, unlocked by saved play seconds today, not yet claimed | 3/s |
+
+Everything else the client sees (Pet, OwnedPets, GiftSec, GiftReady, GiftClaimed, TrioDone, TrioStreak, Premium, and the ReplicatedStorage attributes GoalProgress/GoalTarget/GoalBoostEnds) is display-only.

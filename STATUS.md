@@ -58,3 +58,12 @@ Live **v30** verified; backup = exact v30 bytes (tag live-v30). Done: PLAN_V2 it
 **Current item:** A (first 60 s) + B (bright map) + C (retention) as one release.
 
 **13:08 status:** live v32 verified (A+B+C released). Thumbnails/icon uploaded (pending moderation). UPDATE_PLAN.md written. Next: report.
+
+
+# CLOUD BURN SESSION (v4), started 2026-11-02, branch `claude/cloud-burn`
+Environment: Linux container, no Roblox Studio, nothing published, no Open Cloud calls. Live game is still v32.
+**Tools installed:** rojo 7.7.1, selene 0.31, stylua 2.6 (cargo), Blender 4.0.2 (apt), and a Luau test harness built in `tools/luau_harness` (mlua with vendored Luau).
+**Built:** Companions (5, bought with Wins), server-wide shard goal (shared boost), playtime gifts, Daily Trio quests + streak, 9 new quests with a stage filter, first-clear stage bonus, friend-joined toast, free Premium perk, zone sky ambience, code-built scenery (clouds, lantern orbs, pennants), companion purchase nudge, store transparency text.
+**Checks:** `tools/run_checks.sh` passes (rojo, selene, stylua, compile, 3 harness runs). Not run in Studio.
+**Renders:** 4 Blender candidates in `promo/renders/` (see THUMBNAILS.md). Not uploaded.
+**Next:** Studio pass per TESTING.md "V4 release checklist", then publish.

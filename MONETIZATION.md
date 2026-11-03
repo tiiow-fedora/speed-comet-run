@@ -29,3 +29,17 @@ Created 2026-10-03 ~23:46 via Open Cloud (`POST /game-passes/v1/universes/{U}/ga
 ## Prompt placement
 - STORE side button → panel with all passes and products
 - SKIP ⏩ button next to the gate progress bar (only shown while the next gate is still locked)
+
+
+## v4 changes (branch `claude/cloud-burn`, not published)
+No new passes or products were created (that needs Open Cloud, which this session did not use). Existing IDs, prices and grants are unchanged.
+- **Store panel** now says purchases are optional and nothing is random, and shows what each item gives this player right now (Speed Burst amount, which gate Skip Stage passes).
+- **Free systems added, none purchasable:** companions (Wins only), playtime gifts, Daily Trio, server shard goal, first-clear stage bonus.
+- **Roblox Premium perk:** members get +10% Speed gain (`Config.PremiumMult`). This is the platform's own subscription, not a purchase in this game; it is shown as a chip and gated on `Player.MembershipType`.
+- **Fairness check against this file's rules:** no paid randomness; companions have fixed prices; every Robux item still has a fixed stated result; the 3x potion and Speed Burst scale with the player (no flat amounts that become meaningless or overpowered); no reward asks for anything off-platform.
+- **Balance** (`tools/balance_sim.py`, greedy player, free): stage 10 at 47 min with companions vs 59 min without; stage 14 at 161 min vs 379 min. With the 2x Speed pass the sim gives 31 vs 36 min for stage 10. The 2x pass still roughly halves early-game time.
+
+## Ideas that need the owner (not done)
+1. A second "Starter Pack" product (for example Speed Burst + 10 min potion at a discount) would need a new developer product ID.
+2. Badges (welcome, first rebirth, all companions) cost Robux to create but are a common retention and discovery hook.
+3. A companion-slot pass would be pay-to-win adjacent; skipped.

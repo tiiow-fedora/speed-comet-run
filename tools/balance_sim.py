@@ -14,11 +14,13 @@ for i in range(1,len(req)+1):
     z+=2*(gap+isl)+gap; z+=70+10*i
     gates.append(z-6); padlen=70 if i==len(req) else 50; pads.append(z+25); z+=padlen
 spawn=-20
-def sim(mult_pass=1.0, horizon=12*3600):
-    t=0; speed=0; w=0; boot=0; reb=0; reached=0; marks={}
+# v4 companions (mirror Config.Companions): (Speed gain bonus, Wins cost); one equipped, buy order by value per cost
+pets=[(0.10,100),(0.25,800),(0.50,5000),(1.00,30000),(2.00,200000)]
+def sim(mult_pass=1.0, horizon=12*3600, use_pets=False):
+    t=0; speed=0; w=0; boot=0; reb=0; reached=0; marks={}; pet=-1
     pos=spawn; claimed=set()
     while t<horizon and reached<len(req):
-        m=boots[boot][0]*(1+reb)*mult_pass
+        m=boots[boot][0]*(1+reb)*mult_pass*((1+pets[pet][0]) if pet>=0 else 1)
         # next target
         n=len(claimed)
         if n<len(req) and speed>=req[n]:
@@ -35,9 +37,19 @@ def sim(mult_pass=1.0, horizon=12*3600):
                 t+=dt; speed+=m*dt; w+=sum(wins[:n]); pos=pads[n-1]
             else:
                 t+=5; speed+=m*5
-        for b in range(len(boots)-1,boot,-1):
-            if w>=boots[b][1]: w-=boots[b][1]; boot=b; break
+        # buy the affordable upgrade with the best multiplier gain per Wins (boots or, if enabled, the next companion)
+        options=[]
+        if boot+1<len(boots): options.append((boots[boot+1][0]/boots[boot][0], boots[boot+1][1], "b"))
+        if use_pets and pet+1<len(pets):
+            cur=(1+pets[pet][0]) if pet>=0 else 1
+            options.append(((1+pets[pet+1][0])/cur, pets[pet+1][1], "p"))
+        options=[o for o in options if w>=o[1]]
+        if options:
+            gain,cost,kind=max(options,key=lambda o: math.log(o[0])/o[1])
+            w-=cost
+            if kind=="b": boot+=1
+            else: pet+=1
     return marks
-for label,mp in [("free",1),("2x pass",2)]:
-    mk=sim(mp); print(label, {k:f"{v/60:.1f}m" for k,v in mk.items()})
+for label,mp,up in [("free",1,False),("free + companions",1,True),("2x pass",2,False),("2x pass + companions",2,True)]:
+    mk=sim(mp,use_pets=up); print(label, {k:f"{v/60:.1f}m" for k,v in mk.items()})
 print("gate Z:",[round(g) for g in gates])
