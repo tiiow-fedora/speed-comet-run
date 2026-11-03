@@ -128,7 +128,7 @@ The early game (stages 1-10) is unchanged. Rebirths are now the main lever for t
 ## Checks (last commit)
 | Check | Result |
 |---|---|
-| `tools/run_checks.sh` (rojo build, selene, stylua --check, Luau compile of all 28 files) | ALL PASSED |
+| `tools/run_checks.sh` (rojo build, selene, stylua --check, Luau compile of all 27 files) | ALL PASSED |
 | Server logic harness | 73/73 (was 40): config integrity, trophies, rebirth head start/purse/star, both new events, high-fives incl. cooldown, distance, bad targets and hourly cap, finish-quest gating |
 | Client smoke | 37/37 (was 30): Trophies panel, rebirth text, high-five prompt and remote |
 | Real DevTest in the mock | 106 pass, 6 skipped (same 6 as v4) = 112 total; expect 112 PASS in Studio |
