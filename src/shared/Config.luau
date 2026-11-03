@@ -92,9 +92,12 @@ Config.TrioMult = 2
 Config.TrioStreakDays = 7
 Config.QuestMinBase = 25
 
--- Comet Shards (v3): pickups along stages 1-3, once per lap, +Speed = max(ShardMin, gain x ShardSeconds)
-Config.ShardStages = 3
+-- Comet Shards (v3): pickups along the track, once per lap, +Speed = max(ShardMin, gain x ShardSeconds)
+-- v4: shards in every zone (stages 1-3 keep the dense v3 spacing; later stages are sparser)
+Config.ShardStages = 15
 Config.ShardSpacing = 18
+Config.ShardSpacingLate = 30
+Config.ShardDenseStages = 3
 Config.ShardMin = 5
 Config.ShardSeconds = 3
 

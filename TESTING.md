@@ -94,7 +94,7 @@ Written in a Linux container with no Roblox Studio. What was and was not checked
 The mock does not simulate physics, rendering, layout, real DataStores, MarketplaceService or real Roblox types. A pass there means the logic runs and the numbers add up. It says nothing about how anything looks or feels.
 
 ## To run in Studio before publishing
-1. `rojo serve` (or `rojo build -o CometRun.rbxl`), open, press Play. Run `game.ServerScriptService.DevRun:Invoke()` from the command bar. Expect 0 FAIL and roughly 115 PASS (v3 had 58; v4 adds about 50 checks in sections 17-21 plus a changed pad check). The 6 checks that the mock skips (5 receipt checks, landmark meshes) must PASS in Studio.
+1. `rojo serve` (or `rojo build -o CometRun.rbxl`), open, press Play. Run `game.ServerScriptService.DevRun:Invoke()` from the command bar. Expect 0 FAIL and 104 PASS (v3 had 58; v4 adds 46 in sections 17-21 and changes the pad check to include the first-clear bonus). The mock runs 98 of them; the other 6 (5 receipt checks, landmark meshes) can only pass in Studio.
 2. Repeat with Test > Clients and Servers, 2 players, and once in the iPhone 7 emulator (667x375).
 3. UI by eye, desktop and phone emulator:
    - SHOP button (was BOOTS): the pink "COMPANIONS" row opens the Companions panel; "BOOTS" row at the bottom returns.

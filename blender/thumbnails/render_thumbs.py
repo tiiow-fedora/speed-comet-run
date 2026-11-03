@@ -109,10 +109,10 @@ def gate(z, zone, locked):
     box(0, Y + 29, z, W + 8, 3, 4, mat(zone["accent"], 1.5))
 def pad(z, final):
     cyl_y(0, Y + 0.2, z, 22, 1, mat((0.9, 0.7, 0.2))); cyl_y(0, Y + 0.15, z, 23, 1.1, mat((1, 0.8, 0.2), 1.5, 0.7))
-def shards(z0, z1):
+def shards(z0, z1, spacing=18):
     k = 0; z = z0 + 12
     while z < z1 - 8:
-        k += 1; o = box(((k % 3) - 1) * 9, Y + 3, z, 2, 2, 2, mat((0.47, 1, 0.94), 2), rot=(math.radians(45), math.radians(45), 0)); z += 18
+        k += 1; o = box(((k % 3) - 1) * 9, Y + 3, z, 2, 2, 2, mat((0.47, 1, 0.94), 2), rot=(math.radians(45), math.radians(45), 0)); z += spacing
 z1 = zones[0]
 floor(-40, 40, z1)
 box(0, Y + 0.5, -20, 14, 1, 14, mat((0.16, 0.43, 0.55)))
@@ -123,12 +123,12 @@ for i, (req, wins, zi) in enumerate(stages, start=1):
     prev = stages[i - 2][0] if i > 1 else 0
     gap = 6 if i == 1 else min(45, max(8, ws(prev) * T * 0.5))
     segA = 60 + 8 * i; floor(z, z + segA, zone)
-    if i <= 3: shards(z, z + segA)
+    shards(z, z + segA, 18 if i <= 3 else 30)
     z += segA; L = 22 + i
     for _ in range(2):
         z += gap; island(z + L / 2, L, zone); z += L
     z += gap; segB = 70 + 10 * i; floor(z, z + segB, zone)
-    if i <= 3: shards(z, z + segB - 20)
+    shards(z, z + segB - 20, 18 if i <= 3 else 30)
     z += segB; gate(z - 6, zone, locked=(i >= 3)); gateZ.append(z - 6)
     padLen = 70 if i == len(stages) else 50; floor(z, z + padLen, zone); pad(z + 25, i == len(stages)); padZ.append(z + 25)
     zz = start

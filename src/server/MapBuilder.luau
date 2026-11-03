@@ -596,7 +596,7 @@ local function shardsAlong(z0: number, z1: number, stageIndex: number, layout: L
 		shard:SetAttribute("Id", id)
 		CollectionService:AddTag(shard, "Shard")
 		table.insert(layout.Shards, { Id = id, Pos = pos })
-		z += Config.ShardSpacing
+		z += if stageIndex <= Config.ShardDenseStages then Config.ShardSpacing else Config.ShardSpacingLate
 	end
 end
 

@@ -28,6 +28,7 @@ type Runtime = {
 	finishing: boolean,
 	slow: boolean,
 	shards: { [string]: boolean },
+	lastZ: number?, -- previous 10 Hz position sample (nil after a teleport), so fast runners can't skip over a shard between samples
 }
 
 local layout: MapBuilder.Layout
@@ -119,6 +120,7 @@ function Gameplay.teleport(player: Player, cf: CFrame)
 	if rt then
 		rt.grace = os.clock() + 1.5
 		rt.sampleFrom = nil
+		rt.lastZ = nil
 	end
 	hrp.AssemblyLinearVelocity = Vector3.zero
 	c:PivotTo(cf)
@@ -301,9 +303,17 @@ local function checkPlayer(player: Player, rt: Runtime, p: DataService.Profile)
 		return
 	end
 	-- Comet Shards: +Speed once per lap each (server decides by position)
-	if pos.Z < 1400 then
+	do
+		-- swept along Z between samples (a 140 studs/s runner moves 14 studs per sample); after a teleport only what is near now
+		local prevZ = rt.lastZ or pos.Z
+		rt.lastZ = pos.Z
+		local zLo, zHi = math.min(prevZ, pos.Z) - 4, math.max(prevZ, pos.Z) + 4
+		if zHi - zLo > 60 then
+			zLo, zHi = pos.Z - 6, pos.Z + 6
+		end
 		for _, sh in layout.Shards do
-			if not rt.shards[sh.Id] and (pos - sh.Pos).Magnitude < 6 then
+			local sp = sh.Pos
+			if sp.Z >= zLo and sp.Z <= zHi and not rt.shards[sh.Id] and math.abs(pos.X - sp.X) < 7 and math.abs(pos.Y - sp.Y) < 12 then
 				rt.shards[sh.Id] = true
 				local amount = math.floor(math.max(Config.ShardMin, Gameplay.multiplier(player, p) * Config.ShardSeconds) * Config.CurrentEvent().ShardMult)
 				p.Speed += amount

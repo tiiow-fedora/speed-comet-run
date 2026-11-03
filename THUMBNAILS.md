@@ -81,3 +81,18 @@ The homepage thumbnails (Thumbnail Personalization API) are a separate slot from
 - thumb_mars_shards.png → 200, targetId 8442042170712504 → image 72736726042541, approved
 - thumb_aerial_track.png → **not uploaded**: the third upload was blocked by the session's permission guard. Add it by hand in Creator Hub → Thumbnails → Experience Detail Page if wanted.
 Right after upload the game page showed the "processing" placeholder instead of the Roblox logo (`tests/screens/run3/detail_page_processing.jpg`); the images appear once Roblox's CDN finishes rendering them.
+
+
+## v4 renders (2026-11-02, Blender 4.0.2 in a Linux container; not uploaded)
+`blender/thumbnails/render_thumbs.py` gained shots named `v4_*` / `icon_v4_*`. They add the code-built scenery from `MapBuilder.scenery` (clouds, lantern orbs, pennant flags) and the five companions, built from primitives that mirror `src/client/Pets.luau`. Run: `RENDER_OUT=promo/renders blender --background --factory-startup --python blender/thumbnails/render_thumbs.py -- v4_collection icon_v4_foxes ...` (build the meshes first with `blender/props.py` and `blender/landmarks.py`). One Blender run builds the whole track, so render several shots in one command; a run of 6 shots took about 7 minutes. Sun and sky are dimmed for these shots so colors do not wash out.
+
+| Render (in `promo/renders/`) | Verdict | Why |
+|---|---|---|
+| `icon_v4_foxes.png` | candidate icon | A close, front-facing Star Fox with ears and a big nose is readable at small sizes. Ears are cropped at the top edge |
+| `icon_v4_companion.png` | candidate icon | Comet Pup close-up, readable; its orange comes out tan in this light |
+| `v4_collection.png` | candidate thumbnail | All five companions in a row under the spawn arch with the comet behind. The lower third is empty floor; crop or move the camera down before use. Dragon and bug look alike from the front |
+| `v4_clouds_aerial.png` | candidate thumbnail | Whole track with clouds, orbs and the comet. Reads as "bright and busy" better than the v3 aerial |
+| `rejected/v4_hero_companion.png` | rejected | The companion is behind the runner and shows only its glowing tail, a white blob |
+| (deleted) `v4_mars_pup` | rejected | The camera sat inside a rail and the frame was mostly flat color |
+
+The runner is still the blocky stand-in, and the companion models in Blender are approximations of the in-game primitives (proportions are close, shading and size in-engine will differ). Replace with real Studio captures once the update is live.

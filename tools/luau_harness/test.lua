@@ -18,6 +18,8 @@ local test = function()
 	end
 	local shards = {}
 	for k = 1, 40 do shards[k] = { Id = "1_" .. k, Pos = Vector3.new(0, 203, 30 + k * 6) } end
+	shards[41] = { Id = "9_41", Pos = Vector3.new(0, 203, 3000) } -- far down the track (v3 only paid shards before Z 1400)
+	shards[42] = { Id = "9_42", Pos = Vector3.new(0, 203, 3200) }
 	local layout = { Stages = stages, Shards = shards, SpawnCFrame = CFrame.lookAt(Vector3.new(0, 204, -20), Vector3.new(0, 204, 100)), EndZ = 5000, PartCount = 1500 }
 	M.stub("MapBuilder.luau", { build = function() return layout end })
 	M.stub("Leaderboard.luau", { build = function() end, start = function() end, submit = function() end, submitTo = function() end })
@@ -120,6 +122,22 @@ local test = function()
 	check("gain x1.5*1.25 during boost", math.abs((prof.Speed - s1) / 4 - 1.25 * 1.5) < 0.01, (prof.Speed - s1) / 4)
 	M.advance(Config.Goal.BoostSeconds + 2)
 	check("boost expires", not Goal.boostActive())
+
+	-- swept pickup: a fast runner that jumps over a shard between two 10 Hz samples still collects it; late-game shards pay too
+	Gameplay.resetLap(p1)
+	prof.Speed = 1e12 -- past every gate, so the gate check cannot interfere
+	Gameplay.runtime(p1).grace = math.huge
+	local sp0 = Goal.progress()
+	hrp1.Position = Vector3.new(0, 204, 2985); M.advance(0.2)
+	hrp1.Position = Vector3.new(0, 204, 3003); M.advance(0.2)
+	check("fast runner collects a shard it jumped over (swept check, Z 3000)", Goal.progress() == sp0 + 1, Goal.progress() - sp0)
+	local sp1 = Goal.progress()
+	hrp1.Position = Vector3.new(30, 204, 3200); M.advance(0.3)
+	check("a shard far off the lane is not collected", Goal.progress() == sp1)
+	hrp1.Position = Vector3.new(0, 204, 3200); M.advance(0.3)
+	check("shards past Z 1400 pay with a normal pass too", Goal.progress() == sp1 + 1, Goal.progress() - sp1)
+	Gameplay.resetLap(p1)
+	hrp1.Position = Vector3.new(0, 204, 0); M.advance(0.2)
 
 	-- first-clear bonus: pad pays base once more the very first time a stage is cleared
 	local rt1 = Gameplay.runtime(p1)

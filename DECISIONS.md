@@ -35,3 +35,17 @@
 - **13:05 Thumbnails rendered from the real layout** (Config-driven Blender scene with the game's meshes), so every element exists in the game. 3 homepage thumbnails (within Roblox's 2–5 advice) + 1 icon.
 - **13:06 No paid ads or promotion**: forbidden by the brief; listed as an owner decision.
 - **13:07 Bash heredocs with emoji/apostrophes failed to parse twice** → switched to writing script files and running them.
+
+
+## Cloud-burn session v4 (2026-11-02, no Studio, nothing published)
+- **Companions are bought with Wins only, fixed prices, no eggs.** Keeps MONETIZATION.md's "no paid randomness" rule and gives Wins a lasting sink after boots. Bonus is multiplicative on Speed gain (x(1+Bonus)). Costs 100/800/5,000/30,000/200,000 were set with `tools/balance_sim.py` so a companion is worth about as much per Wins as the matching boots.
+- **Companions render on the client only.** The server stores the index and applies the bonus; every client draws every player's companion from the replicated `Pet` attribute. No server parts, no network cost per frame.
+- **Companion models are primitives, not Blender meshes.** Meshes would need an upload through Open Cloud, which this session was not allowed to do. `Pets.build` is the single place to swap them.
+- **Shared shard goal does not count shards collected during the boost** and scales its target with player count (30 + 15 per extra player, max 150). Solo players can still earn it; a full server needs more shards but also collects them faster.
+- **Playtime gifts are saved per UTC day** (`GiftDay/GiftSeconds/GiftClaims`) rather than per session, so rejoining neither resets nor repeats them.
+- **Quest pool entries carry `MinStage`** so a new player never rolls "Reach the FINISH" or "Rebirth once". Each tier keeps at least one quest with no requirement.
+- **Premium perk is +10% Speed gain** via `MembershipType`. Documented, platform-supported, small.
+- **First-clear bonus** equals the pad's base Wins and is paid once per stage per account (`BestStage` is never reset by rebirth).
+- **Save format:** only new fields were added; `reconcile()` defaults them for old saves and rejects wrong types (checked by DevTest and the harness). No key or existing field changed.
+- **stylua at width 200 + LF** was applied to all of `src` (4 files had CRLF). The existing code was not stylua-formatted at any width, so this commit is whitespace and wrapping only.
+- **Offline Luau harness** (`tools/luau_harness`, mlua + vendored Luau) instead of a type checker: the type-check tools (luau-lsp) are downloaded binaries, which this session did not run. The harness proves syntax and logic, not types.
