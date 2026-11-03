@@ -1,0 +1,43 @@
+---
+base: luau
+name: roblox_min
+# Minimal Roblox globals used by this project (selene's full Roblox std needs the API dump from GitHub).
+globals:
+  CFrame:
+    any: true
+  Color3:
+    any: true
+  ColorSequence:
+    any: true
+  Enum:
+    any: true
+  Instance:
+    any: true
+  NumberRange:
+    any: true
+  NumberSequence:
+    any: true
+  NumberSequenceKeypoint:
+    any: true
+  Random:
+    any: true
+  TweenInfo:
+    any: true
+  UDim:
+    any: true
+  UDim2:
+    any: true
+  Vector2:
+    any: true
+  Vector3:
+    any: true
+  game:
+    any: true
+  script:
+    any: true
+  task:
+    any: true
+  warn:
+    any: true
+  workspace:
+    any: true
