@@ -169,6 +169,9 @@ function Instance.new(cls)
 	if cls == "RemoteEvent" then
 		o._props.OnServerEvent = Signal.new()
 		o._props.FireClient = function(self, plr, ...) table.insert(M.fired, { remote = self.Name, player = plr, args = { ... } }) end
+	elseif baseClass[cls] == "BasePart" then
+		o._props.Size = Vector3.new(2, 1, 4); o._props.CFrame = CFrame.new(0, 0, 0); o._props.Position = Vector3.new(0, 0, 0)
+		o._props.Transparency = 0; o._props.CanCollide = true; o._props.CanTouch = true; o._props.CanQuery = true
 	elseif cls == "BindableFunction" then
 		o._props.Invoke = function() end
 	end
@@ -201,6 +204,7 @@ local players = {}
 local PlayersSvc = M.inst("Folder", "Players")
 PlayersSvc.GetPlayers = function() return { table.unpack(players) } end
 PlayersSvc.PlayerAdded = Signal.new(); PlayersSvc.PlayerRemoving = Signal.new()
+PlayersSvc.GetPlayerByUserId = function(_, id) for _, p in ipairs(players) do if p.UserId == id then return p end end return nil end
 PlayersSvc.GetNameFromUserIdAsync = function() return "Someone" end
 M.players = players
 local RunService = { IsStudio = function() return true end, Heartbeat = heartbeat, RenderStepped = Signal.new() }

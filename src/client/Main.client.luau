@@ -392,6 +392,21 @@ task.spawn(function()
 	end
 end)
 
+-- one-time nudge (per session) the first time a companion becomes affordable
+do
+	local nudged = false
+	player:GetAttributeChangedSignal("Wins"):Connect(function()
+		if nudged or tutorialStep < 99 then
+			return
+		end
+		if (player:GetAttribute("OwnedPets") or "") == "" and ((player:GetAttribute("Wins") :: number?) or 0) >= Config.Companions[1].Cost then
+			nudged = true
+			Hud.toast("You can adopt a companion! Open SHOP 🐾", Theme.Pink)
+			Hud.pulse("Shop")
+		end
+	end)
+end
+
 -- daily reward popup on join
 task.delay(4, function()
 	if player:GetAttribute("DailyReady") and tutorialStep >= 99 then

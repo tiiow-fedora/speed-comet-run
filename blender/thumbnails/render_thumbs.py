@@ -5,23 +5,34 @@ The track is rebuilt from src/shared/Config.luau with the same rules as src/serv
 using the same Blender meshes the game loads (blender/out/*.fbx). Nothing is shown that is not in the game.
 
 Run: blender --background --factory-startup --python blender/thumbnails/render_thumbs.py -- [names...]
-Outputs: assets/thumbnails/thumb_*.png, icon_*.png
+Outputs: assets/thumbnails/thumb_*.png, icon_*.png   (set RENDER_OUT=<dir> to write somewhere else, e.g. promo/renders)
+
+v4 additions (shots named v4_*): the code-built scenery from MapBuilder (clouds, lantern orbs, pennant flags) and the
+companions from Config.Companions, built from primitives that mirror src/client/Pets.luau. Requires the blender/out meshes:
+  blender --background --factory-startup --python blender/props.py
+  blender --background --factory-startup --python blender/landmarks.py
 """
 import bpy, math, os, re, sys, random
 from mathutils import Vector
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-OUT = os.path.join(ROOT, "assets", "thumbnails"); os.makedirs(OUT, exist_ok=True)
+OUT = os.environ.get("RENDER_OUT") or os.path.join(ROOT, "assets", "thumbnails"); os.makedirs(OUT, exist_ok=True)
 MESH = os.path.join(ROOT, "blender", "out")
 cfg = open(os.path.join(ROOT, "src", "shared", "Config.luau"), encoding="utf-8").read()
+
+V4 = any(a.startswith("v4_") or a.startswith("icon_v4") for a in sys.argv[sys.argv.index("--") + 1:]) if "--" in sys.argv else False
 
 # ---------- read Config ----------
 def rgb(t): return tuple(int(v) / 255 for v in t)
 zones = []
 for m in re.finditer(r'Name = "([^"]+)", Floor = Color3\.fromRGB\((\d+), (\d+), (\d+)\), Accent = Color3\.fromRGB\((\d+), (\d+), (\d+)\), Rock = Color3\.fromRGB\((\d+), (\d+), (\d+)\)', cfg):
     g = m.groups(); zones.append({"name": g[0], "floor": rgb(g[1:4]), "accent": rgb(g[4:7]), "rock": rgb(g[7:10])})
+comps = []
+for m in re.finditer(r'Id = "(\w+)", Name = "([^"]+)", Cost = (\d+), Bonus = ([\d.]+), Color = Color3\.fromRGB\((\d+), (\d+), (\d+)\), Glow = Color3\.fromRGB\((\d+), (\d+), (\d+)\), Kind = "(\w+)"', cfg):
+    g = m.groups(); comps.append({"id": g[0], "name": g[1], "cost": int(g[2]), "bonus": float(g[3]), "color": rgb(g[4:7]), "glow": rgb(g[7:10]), "kind": g[10]})
 stages = [(int(a), int(b), int(c)) for a, b, c in re.findall(r"\{ Req = (\d+), Wins = (\d+), Zone = (\d+) \}", cfg)]
 assert len(zones) >= 6 and len(stages) >= 15, (len(zones), len(stages))
+assert len(comps) >= 5, len(comps)
 GRAV, JUMP, W, Y = 80, 16, 40, 200
 def ws(s): return min(140, 16 + 12 * math.log(1 + max(s, 0) / 5))
 T = 2 * math.sqrt(2 * GRAV * JUMP) / GRAV
@@ -78,6 +89,10 @@ bpy.ops.object.light_add(type="SUN", rotation=(math.radians(50), math.radians(10
 bpy.context.object.data.energy = 3.5
 scn.render.engine = "BLENDER_EEVEE_NEXT" if "BLENDER_EEVEE_NEXT" in [e.identifier for e in bpy.types.RenderSettings.bl_rna.properties["engine"].enum_items] else "BLENDER_EEVEE"
 scn.view_settings.view_transform = "Standard"
+if V4:  # v4 renders: a little less light so pet and zone colors stay saturated instead of washing out to pastel
+    for o in bpy.data.objects:
+        if o.type == "LIGHT": o.data.energy = 2.3
+    bg.inputs["Strength"].default_value = 0.75
 
 # ---------- track (mirrors MapBuilder.build) ----------
 rng = random.Random(20261003)
@@ -149,6 +164,81 @@ db = B(0, 0.42, 1).normalized()
 tail = inst("CometTail", B(0, Y + 70, 340) + db * 85, 170, mat((1, 0.4, 0.65), 1.2, 0.8))
 tail.rotation_mode = "QUATERNION"; tail.rotation_quaternion = ax.rotation_difference(db)
 
+
+# ---------- v4 scenery (mirrors MapBuilder.scenery: clouds, lantern orbs, pennant flags) ----------
+srng = random.Random(4040)
+def lerp3(a, b, t): return tuple(a[i] + (b[i] - a[i]) * t for i in range(3))
+def cloud(cx, cy, cz, scale, tint):
+    for off, k in (((0, 0, 0), 1.0), ((1.0, -0.15, 0.2), 0.8), ((-1.0, -0.2, -0.1), 0.85), ((0.4, 0.4, 0.1), 0.7), ((-0.45, 0.35, -0.2), 0.6)):
+        ball(cx + off[0] * scale, cy + off[1] * scale, cz + off[2] * scale, scale * k * 0.7, mat(lerp3((1, 1, 1), tint, 0.3)), seg=20)
+def pennant(x, z, color):
+    box(x, Y + 8, z, 0.6, 16, 0.6, mat((0.98, 0.98, 1)))
+    box(x, Y + 14, z + 3.2, 0.3, 3.5, 6, mat(color, 2))
+def scenery():
+    zEnds = []
+    zs = 40
+    for i, (req, wins, zi) in enumerate(stages, start=1):
+        pass
+    for i, (req, wins, zi) in enumerate(stages, start=1):
+        zone = zones[zi - 1]
+        z0 = gateZ[i - 1] - (60 + 8 * i + 2 * (22 + i) + 3 * (8 if i > 1 else 6) + 70 + 10 * i) + 6
+        z1_ = padZ[i - 1] + 25
+        L = z1_ - z0
+        for k, side in enumerate((-1, 1)):
+            cloud(side * srng.uniform(W / 2 + 45, W / 2 + 95), Y + srng.uniform(18, 55), z0 + L * (0.25 + 0.4 * k) + srng.uniform(-20, 20), srng.uniform(9, 15), zone["accent"])
+        if i % 2 == 0:
+            cloud(srng.uniform(-60, 60), Y - srng.uniform(55, 90), z0 + L * 0.5, srng.uniform(16, 24), zone["rock"])
+        for _ in range(6):
+            side = -1 if srng.random() < 0.5 else 1
+            sz = srng.uniform(1.6, 3.2)
+            ball(side * srng.uniform(W / 2 + 5, W / 2 + 38), Y + srng.uniform(6, 34), z0 + srng.uniform(0, L), sz / 2, mat(lerp3(zone["accent"], (1, 1, 1), srng.uniform(0, 0.35)), 2.0), seg=16)
+        pennant(-(W / 2 - 3), padZ[i - 1], zone["accent"]); pennant(W / 2 - 3, padZ[i - 1], zone["accent"])
+if V4: scenery()
+
+# ---------- v4 companions (primitives mirroring src/client/Pets.luau; the pet faces +Z like the runner) ----------
+def squash(o, sx, sy, sz): o.scale = (sx, sz, sy); return o   # sizes given in Roblox axes (x, y, z)
+def companion(c, x, y, z, s=1.0, face=1):
+    """face=+1: looks down the track (+Z) like in the game; face=-1: turned toward a camera behind the spawn."""
+    col, glow, kind = c["color"], c["glow"], c["kind"]
+    m, mg = mat(col), mat(glow, 1.0)
+    white, dark = mat((1, 1, 1)), mat((0.08, 0.08, 0.16))
+    out = []
+    def blob(dx, dy, dz, sx, sy, sz, material):
+        o = ball(x + dx * s, y + dy * s, z + dz * face * s, 0.5, material, seg=24); squash(o, sx * s, sy * s, sz * s); out.append(o); return o
+    def blk(dx, dy, dz, sx, sy, sz, material, rot=(0, 0, 0)):
+        o = box(x + dx * s, y + dy * s, z + dz * face * s, sx * s, sy * s, sz * s, material, rot=(rot[0] * face, rot[1] * face, rot[2])); out.append(o); return o
+    f = 1  # forward = +Z
+    if kind == "bug":
+        blob(0, 0, 0, 1.5, 1.3, 1.9, m); blob(0, 0.1, 1.1, 1.1, 1.1, 1.1, mat(lerp3(col, (1, 1, 1), 0.25))); blob(0, -0.1, -1.2, 1.2, 1.2, 1.2, mg)
+    elif kind == "pup":
+        blob(0, 0, 0, 1.7, 1.5, 2.1, m); blob(0, 0.55, 1.2, 1.5, 1.4, 1.4, mat(lerp3(col, (1, 1, 1), 0.2))); blob(0, 0.3, 1.85, 0.7, 0.55, 0.55, mat((1, 0.92, 0.84)))
+        blob(0, 0.5, 2.1, 0.25, 0.2, 0.2, dark); blob(0, 0.5, -1.25, 0.7, 0.7, 0.7, mg)
+        for sd in (-1, 1): blk(sd * 0.78, 0.9, 1.0, 0.3, 0.8, 0.6, mat(lerp3(col, (0, 0, 0), 0.25)), rot=(0, 0, math.radians(sd * 25)))
+    elif kind == "fox":
+        blob(0, 0, 0, 1.5, 1.4, 2.3, m); blob(0, 0.5, 1.25, 1.4, 1.3, 1.4, m); blob(0, 0.28, 1.95, 0.7, 0.55, 0.9, white); blob(0, 0.35, 2.4, 0.25, 0.2, 0.2, dark)
+        for sd in (-1, 1): blk(sd * 0.5, 1.45, 1.1, 0.5, 1.0, 0.25, m, rot=(0, 0, math.radians(sd * 12)))
+        blob(0, 0.5, -1.9, 1.0, 1.0, 2.2, m); blob(0, 0.9, -2.9, 0.8, 0.8, 0.9, mg)
+    elif kind == "cat":
+        blob(0, 0, 0, 1.6, 1.5, 2.2, m); blob(0, 0.6, 1.2, 1.6, 1.4, 1.4, mat(lerp3(col, (1, 1, 1), 0.12)))
+        for sd in (-1, 1): blk(sd * 0.62, 1.55, 1.1, 0.45, 0.7, 0.3, mat(lerp3(col, (0, 0, 0), 0.2)), rot=(0, 0, math.radians(sd * 18)))
+        blob(0, 1.2, 1.85, 0.35, 0.35, 0.2, mg); blk(0, 0.9, -1.7, 0.3, 0.3, 2.0, m, rot=(math.radians(-35), 0, 0)); blob(0, 1.7, -2.35, 0.5, 0.5, 0.5, mg)
+    else:  # dragon
+        blob(0, 0, 0, 1.6, 1.5, 2.2, m); blob(0, 0.6, 1.25, 1.4, 1.3, 1.5, mat(lerp3(col, (1, 1, 1), 0.1))); blob(0, 0.35, 1.95, 0.9, 0.6, 0.8, mat(lerp3(col, (1, 1, 1), 0.2)))
+        for sd in (-1, 1):
+            blk(sd * 0.45, 1.45, 1.2, 0.2, 0.7, 0.2, mg, rot=(math.radians(20), 0, math.radians(sd * 15)))
+            blk(sd * 1.5, 0.75, -0.3, 2.0, 0.12, 1.5, mg, rot=(0, math.radians(sd * 15), math.radians(sd * 28)))
+        blk(0, 0.1, -1.9, 0.45, 0.45, 2.0, m); blob(0, 0.4, -2.95, 0.6, 0.6, 0.6, mg)
+    # eyes (not for the bug's rear glow)
+    for sd in (-1, 1):
+        ez = {"bug": 1.55, "pup": 1.75, "fox": 1.85, "cat": 1.85, "dragon": 1.9}[kind]
+        ey = {"bug": 0.3, "pup": 0.95, "fox": 0.85, "cat": 0.85, "dragon": 0.95}[kind]
+        es = {"bug": 0.38, "pup": 0.34, "fox": 0.32, "cat": 0.4, "dragon": 0.36}[kind]
+        ex = {"bug": 0.32, "pup": 0.42, "fox": 0.4, "cat": 0.45, "dragon": 0.42}[kind]
+        blob(sd * ex, ey, ez, es, es, es, white); blob(sd * ex, ey, ez + es * 0.28, es * 0.55, es * 0.55, es * 0.55, dark)  # (dz is mirrored by blob when face=-1)
+    return out
+def comp(name):
+    return next(c for c in comps if c["id"] == name)
+
 # ---------- runner (blocky avatar like a Roblox character, with a boot trail) ----------
 def runner(x, y, z, trail=(0.47, 1, 0.55), leap=0.0):
     skin = mat((1, 0.8, 0.6)); shirt = mat((0.2, 0.55, 1)); pants = mat((0.15, 0.15, 0.3))
@@ -178,11 +268,27 @@ shots = {
     "icon_runner_comet": ((0, Y + 6, -34), (0, Y + 24, 220), 30, (512, 512), (0, Y, -16), 0),
     "icon_comet_track": ((0, Y + 30, 120), (0, Y + 68, 340), 34, (512, 512), None, 0),
     "icon_gate_runner": ((-10, Y + 6, gateZ[2] - 50), (0, Y + 13, gateZ[2]), 30, (512, 512), (0, Y, gateZ[2] - 32), 0),
+    # v4: code-built scenery + companions (needs V4 scenery, enabled automatically for v4_* names)
+    "v4_hero_companion": ((-9, Y + 6, -38), (-1, Y + 15, 250), 26, (1920, 1080), (0, Y, -12), 0, "starfox"),
+    "v4_mars_pup": ((18, Y + 11, gateZ[1] + 30), (0, Y + 2, gateZ[1] + 200), 26, (1920, 1080), (0, Y, gateZ[1] + 70), 2, "cometpup"),
+    "v4_clouds_aerial": ((190, Y + 150, -150), (0, Y + 5, 800), 30, (1920, 1080), None, 0, None),
+    "v4_collection": ((0, Y + 4, -60), (0, Y + 4, -10), 30, (1920, 1080), None, 0, "ALL"),
+    "icon_v4_companion": ((0, Y + 5.2, -25), (0, Y + 4.6, -16), 34, (512, 512), None, 0, "FRONT:cometpup"),
+    "icon_v4_foxes": ((0, Y + 5.2, -25), (0, Y + 4.6, -16), 34, (512, 512), None, 0, "FRONT:starfox"),
 }
 want = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else list(shots)
 for name in want:
-    c, t, lens, size, run, leap = shots[name]
+    spec = shots[name]
+    c, t, lens, size, run, leap = spec[:6]
+    pet = spec[6] if len(spec) > 6 else None
     extra = runner(*run, leap=leap) if run else []
+    if pet == "ALL":   # lineup of every companion, camera looks down the track at them
+        for k, cc in enumerate(comps):
+            extra += companion(cc, (k - (len(comps) - 1) / 2) * 7.5, Y + 3, -20 + (k % 2) * 4, 1.6, face=-1)
+    elif pet and pet.startswith("FRONT:"):   # a single companion facing the camera (icon)
+        extra += companion(comp(pet[6:]), 0, Y + 4.2, -16, 2.2, face=-1)
+    elif pet and run:
+        extra += companion(comp(pet), run[0] - 3.4, run[1] + 1.2 + 3, run[2] - 3.8, 1.0)
     cam(B(*c), B(*t), lens)
     scn.render.resolution_x, scn.render.resolution_y = size
     scn.render.filepath = os.path.join(OUT, name + ".png")
