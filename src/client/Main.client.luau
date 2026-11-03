@@ -419,6 +419,12 @@ do
 	end)
 end
 
+-- this week's event, once per session (the top bar chip shows its name all the time)
+task.delay(8, function()
+	local ev = Config.CurrentEvent()
+	Hud.toast("🎉 This week: " .. ev.Name .. " - " .. ev.Desc, Color3.fromRGB(255, 170, 230))
+end)
+
 -- daily reward popup on join
 task.delay(4, function()
 	if player:GetAttribute("DailyReady") and tutorialStep >= 99 then

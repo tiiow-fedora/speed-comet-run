@@ -277,7 +277,7 @@ shots = {
     # runner and companion run toward a camera ahead of them (the companion's face is visible), the spawn arch behind them
     "v4_hero_companion": ((-7, Y + 5.5, 86), (0.5, Y + 5.8, 60), 32, (1920, 1080), (0, Y, 62), 0, "FRONTRUN:starfox"),
     "v5_hero_pup": ((-7, Y + 5.5, 86), (0.5, Y + 5.8, 60), 32, (1920, 1080), (0, Y, 62), 0, "FRONTRUN:cometpup"),
-    "v5_aurora_reef": ((26, Y + 16, gateZ[14] + 60), (0, Y + 4, gateZ[14] + 330), 28, (1920, 1080), None, 0, None),
+    "v5_aurora_reef": ((0, Y + 15, gateZ[14] + 30), (0, Y + 3, gateZ[14] + 300), 26, (1920, 1080), None, 0, None),
     "v4_mars_pup": ((18, Y + 11, gateZ[1] + 30), (0, Y + 2, gateZ[1] + 200), 26, (1920, 1080), (0, Y, gateZ[1] + 70), 2, "cometpup"),
     "v4_clouds_aerial": ((190, Y + 150, -150), (0, Y + 5, 800), 30, (1920, 1080), None, 0, None),
     "v4_collection": ((0, Y + 3.5, -52), (0, Y + 9, -10), 30, (1920, 1080), None, 0, "ALL"),
@@ -294,7 +294,7 @@ for name in want:
         n = len(comps)
         for k, cc in enumerate(comps):   # shallow V: the middle one is nearest, so the row fills the frame instead of leaving empty floor
             mid = (n - 1) / 2
-            extra += companion(cc, (k - mid) * 8.0, Y + 3.2 + (k % 2) * 0.5, -20 - (mid - abs(k - mid)) * 5, 2.3, face=-1)
+            extra += companion(cc, (k - mid) * 6.8, Y + 3.2 + (k % 2) * 0.5, -20 - (mid - abs(k - mid)) * 5, 2.3, face=-1)
     elif pet and pet.startswith("FRONT:"):   # a single companion facing the camera (icon)
         extra += companion(comp(pet[6:]), 0, Y + 4.2, -16, 2.2, face=-1)
     elif pet and pet.startswith("SIDERUN:"):   # side view: runner and companion run to the right, companion a little ahead and further from the camera

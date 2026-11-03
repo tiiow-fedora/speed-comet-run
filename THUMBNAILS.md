@@ -96,3 +96,16 @@ Right after upload the game page showed the "processing" placeholder instead of 
 | (deleted) `v4_mars_pup` | rejected | The camera sat inside a rail and the frame was mostly flat color |
 
 The runner is still the blocky stand-in, and the companion models in Blender are approximations of the in-game primitives (proportions are close, shading and size in-engine will differ). Replace with real Studio captures once the update is live.
+
+
+## v5 renders (2026-11-03, Blender 4.0.2 in a Linux container; not uploaded)
+Same script (`blender/thumbnails/render_thumbs.py`), now with: a `RENDER_SCALE` env var for quick drafts (0.4 renders in about 8 min because the scene build dominates; full size about 12 min for 3 shots), a simple face on the stand-in runner, lens shift per shot, the 7th zone and 20 stages read from Config, and `FRONTRUN:` / `SIDERUN:` shot modes (runner plus companion). Run: `RENDER_OUT=promo/renders blender --background --factory-startup --python blender/thumbnails/render_thumbs.py -- v4_hero_companion v4_collection v5_aurora_reef`.
+
+| Render (in `promo/renders/`) | Verdict | Why |
+|---|---|---|
+| `v4_hero_companion.png` (fixed) | candidate thumbnail | The earlier shot was rejected because the camera was behind the runner and the Star Fox showed only a white tail blob. Now the camera is ahead: the runner and the fox run toward it, the fox's ears, eyes and nose are visible, the spawn arch fills the background. Weak spots: flat blue sky behind the arch and the stand-in runner's plain face; replace with a Studio capture when possible |
+| `v4_collection.png` (cropped) | candidate thumbnail | Same five companions, but now arranged in a shallow V (the middle one nearest) with the camera tilted up, so the pets fill the frame and the empty floor is gone (about 12% of the frame is floor, down from about 45%). The Void Dragon's wing tips are cut at the left edge |
+| `v5_aurora_reef.png` | candidate (needs a crop or a sky element) | The new Aurora Reef zone seen along the track: teal floor, teal rocks, clouds, gate ahead. About 40% of the frame is empty sky; use it as a detail-page image, not a homepage thumbnail |
+| `rejected/v4_hero_companion.png` | rejected (kept for the record) | The old behind-the-runner version |
+
+Tried and dropped in drafts: a side view of the runner (the blocky body reads as a thin stack of boxes from the side) and a collection shot made with lens shift (it cut the arch off).
