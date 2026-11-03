@@ -14,6 +14,7 @@ local Config = require(ReplicatedStorage.Shared.Config)
 local Format = require(ReplicatedStorage.Shared.Format)
 local Theme = require(script.Parent.Theme)
 local Sfx = require(script.Parent.Sfx)
+local Pets = require(script.Parent.Pets)
 
 local player = Players.LocalPlayer
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -55,6 +56,28 @@ local function ownedBoots(): { [number]: boolean }
 		t[tonumber(s) :: number] = true
 	end
 	return t
+end
+
+local function ownedPetSet(): { [number]: boolean }
+	local t = {}
+	for s in string.gmatch(attr("OwnedPets", ""), "%d+") do
+		t[tonumber(s) :: number] = true
+	end
+	return t
+end
+
+local function claimedGiftSet(): { [number]: boolean }
+	local t = {}
+	for s in string.gmatch(attr("GiftClaimed", ""), "%d+") do
+		t[tonumber(s) :: number] = true
+	end
+	return t
+end
+
+-- Same scale the server uses for quest and gift rewards (Quests.winsFor), without event multipliers.
+local function rewardScale(mult: number): number
+	local st = Config.Stages[math.clamp(attr("BestStage", 0), 1, #Config.Stages)]
+	return math.floor(mult * math.max(Config.QuestMinBase, st.Wins))
 end
 
 local function tweenPop(inst: GuiObject)
@@ -151,6 +174,18 @@ end
 
 local function buildShop()
 	local _, list = makePanel("Shop", "👟 BOOTS", Theme.Accent)
+	local linkRow = row(list, 0, 52)
+	local link = Theme.button({
+		Text = "🐾 COMPANIONS: bonus Speed gain →",
+		Size = UDim2.new(1, -20, 0, 40),
+		Position = UDim2.fromOffset(10, 6),
+		BackgroundColor3 = Theme.Pink,
+		ZIndex = 23,
+		Parent = linkRow,
+	})
+	link.Activated:Connect(function()
+		openPanel("Pets")
+	end)
 	local rows = {}
 	for i, boot in Config.Boots do
 		local r = row(list, i)
@@ -259,6 +294,119 @@ local function buildRebirth()
 	end)
 end
 
+local function buildPets()
+	local _, list = makePanel("Pets", "🐾 COMPANIONS", Theme.Pink)
+	Theme.label({
+		Text = "Adopt a companion with Wins. It follows you and adds bonus Speed gain. Fixed prices, no luck involved.",
+		Size = UDim2.new(1, -12, 0, 44),
+		TextColor3 = Theme.Muted,
+		Font = Theme.BodyFont,
+		TextWrapped = true,
+		LayoutOrder = 0,
+		ZIndex = 22,
+		Parent = list,
+	})
+	local back = Theme.button({
+		Text = "← BOOTS",
+		Size = UDim2.new(1, -12, 0, 36),
+		BackgroundColor3 = Theme.Accent,
+		LayoutOrder = 99,
+		ZIndex = 22,
+		Parent = list,
+	})
+	back.Activated:Connect(function()
+		openPanel("Shop")
+	end)
+	local buttons = {}
+	for i, pet in Config.Companions do
+		local r = row(list, i, 72)
+		local vp = new("ViewportFrame", {
+			Size = UDim2.fromOffset(60, 60),
+			Position = UDim2.fromOffset(8, 6),
+			BackgroundColor3 = Theme.Bg,
+			BackgroundTransparency = 0.2,
+			Ambient = Color3.fromRGB(200, 200, 220),
+			LightColor = Color3.new(1, 1, 1),
+			LightDirection = Vector3.new(-0.4, -1, -0.6),
+			ZIndex = 23,
+			Parent = r,
+		}, { Theme.corner(10) })
+		local cam = Instance.new("Camera")
+		cam.FieldOfView = 32
+		cam.CFrame = CFrame.lookAt(Vector3.new(1.4, 1.6, -7.5), Vector3.new(0, 0.2, 0))
+		cam.Parent = vp
+		vp.CurrentCamera = cam
+		local model = Pets.build(i)
+		model:PivotTo(CFrame.new())
+		model.Parent = vp
+		Theme.label({
+			Text = pet.Name,
+			Size = UDim2.new(1, -250, 0, 28),
+			Position = UDim2.fromOffset(78, 6),
+			TextXAlignment = Enum.TextXAlignment.Left,
+			ZIndex = 23,
+			Parent = r,
+		})
+		Theme.label({
+			Text = "+" .. math.floor(pet.Bonus * 100) .. "% Speed gain",
+			Size = UDim2.new(1, -250, 0, 20),
+			Position = UDim2.fromOffset(78, 34),
+			TextXAlignment = Enum.TextXAlignment.Left,
+			TextColor3 = Theme.Green,
+			Font = Theme.BodyFont,
+			ZIndex = 23,
+			Parent = r,
+		})
+		Theme.label({
+			Text = pet.Blurb,
+			Size = UDim2.new(1, -250, 0, 16),
+			Position = UDim2.fromOffset(78, 54),
+			TextXAlignment = Enum.TextXAlignment.Left,
+			TextColor3 = Theme.Muted,
+			Font = Theme.BodyFont,
+			ZIndex = 23,
+			Parent = r,
+		})
+		local b = Theme.button({
+			Size = UDim2.fromOffset(160, 46),
+			Position = UDim2.new(1, -170, 0, 13),
+			ZIndex = 23,
+			Parent = r,
+		})
+		b.Activated:Connect(function()
+			if ownedPetSet()[i] then
+				remotes.EquipPet:FireServer(i)
+			else
+				if attr("Wins", 0) < pet.Cost then
+					Sfx.play("error")
+					Hud.toast("Need " .. Format.commas(pet.Cost - attr("Wins", 0)) .. " more Wins", Theme.Red)
+					return
+				end
+				remotes.BuyPet:FireServer(i)
+			end
+		end)
+		buttons[i] = b
+	end
+	table.insert(refreshers, function()
+		local owned = ownedPetSet()
+		local equipped = attr("Pet", 0)
+		local wins = attr("Wins", 0)
+		for i, b in buttons do
+			local pet = Config.Companions[i]
+			if equipped == i then
+				b.Text = "EQUIPPED"
+				b.BackgroundColor3 = Theme.Muted
+			elseif owned[i] then
+				b.Text = "EQUIP"
+				b.BackgroundColor3 = Theme.Accent
+			else
+				b.Text = "🏆 " .. Format.short(pet.Cost)
+				b.BackgroundColor3 = if wins >= pet.Cost then Theme.Green else Theme.PanelLight
+			end
+		end
+	end)
+end
+
 local function buildStore()
 	local _, list = makePanel("Store", "💎 STORE", Theme.Gold)
 	local order = 0
@@ -275,7 +423,8 @@ local function buildStore()
 			Parent = list,
 		})
 	end
-	local function item(name: string, desc: string, price: number, onBuy: () -> ()): TextButton
+	local descLabels: { [string]: TextLabel } = {}
+	local function item(name: string, desc: string, price: number, onBuy: () -> ()): (TextButton, TextLabel)
 		order += 1
 		local r = row(list, order)
 		Theme.label({
@@ -286,7 +435,7 @@ local function buildStore()
 			ZIndex = 23,
 			Parent = r,
 		})
-		Theme.label({
+		local descLabel = Theme.label({
 			Text = desc,
 			Size = UDim2.new(1, -200, 0, 22),
 			Position = UDim2.fromOffset(14, 36),
@@ -305,8 +454,19 @@ local function buildStore()
 			Parent = r,
 		})
 		b.Activated:Connect(onBuy)
-		return b
+		return b, descLabel
 	end
+	order += 1
+	Theme.label({
+		Text = "Everything here is optional. You can earn all progress by playing; no item is random.",
+		Size = UDim2.new(1, -12, 0, 34),
+		TextColor3 = Theme.Muted,
+		Font = Theme.BodyFont,
+		TextWrapped = true,
+		LayoutOrder = order,
+		ZIndex = 22,
+		Parent = list,
+	})
 	header("GAME PASSES (forever)")
 	for _, key in Config.PassOrder do
 		local pass = Config.Passes[key]
@@ -324,11 +484,17 @@ local function buildStore()
 	header("BOOSTS")
 	for _, key in Config.ProductOrder do
 		local prod = Config.Products[key]
-		item(prod.Name, prod.Desc, prod.Price, function()
+		local _, d = item(prod.Name, prod.Desc, prod.Price, function()
 			Hud.promptProduct(key)
 		end)
+		descLabels[key] = d
 	end
 	table.insert(refreshers, function()
+		-- show exactly what a purchase would give this player right now
+		local burst = math.max(Config.BurstMin, attr("Gain", 1) * Config.BurstSeconds)
+		descLabels.SpeedBurst.Text = "+" .. Format.short(burst) .. " Speed now (5 min of your gain)"
+		local n = Hud.nextStage()
+		descLabels.SkipStage.Text = if n then "Jump past Gate " .. n .. " (⚡ " .. Format.short(Config.Stages[n].Req) .. ")" else "Gives a Speed Burst (all gates open)"
 		for key, b in passButtons do
 			if attr("Pass_" .. key, false) then
 				b.Text = "OWNED"
@@ -348,7 +514,7 @@ function Hud.promptProduct(key: string)
 end
 
 local function buildDaily()
-	local _, list = makePanel("Daily", "🎁 DAILY REWARD", Theme.Green)
+	local dailyPanel, list = makePanel("Daily", "🎁 DAILY & GIFTS", Theme.Green)
 	-- v3: 7-day streak strip so the reason to come back tomorrow is visible
 	local streakRow = row(list, 0, 64)
 	local dayBoxes = {}
@@ -411,6 +577,75 @@ local function buildDaily()
 		b.BackgroundColor3 = if ready then Theme.Green else Theme.PanelLight
 		b.Text = if ready then "CLAIM" else "CLAIMED"
 	end)
+
+	-- v4 playtime gifts: free gifts for time played today (progress is saved, so rejoining doesn't reset it)
+	Theme.label({
+		Text = "FREE PLAYTIME GIFTS (today)",
+		Size = UDim2.new(1, -12, 0, 26),
+		TextXAlignment = Enum.TextXAlignment.Left,
+		TextColor3 = Theme.Muted,
+		LayoutOrder = 2,
+		ZIndex = 22,
+		Parent = list,
+	})
+	local giftRows = {}
+	for gi, g in Config.Gifts do
+		local gr = row(list, 2 + gi, 56)
+		local title = Theme.label({
+			Size = UDim2.new(1, -200, 0, 26),
+			Position = UDim2.fromOffset(14, 5),
+			TextXAlignment = Enum.TextXAlignment.Left,
+			ZIndex = 23,
+			Parent = gr,
+		})
+		local sub = Theme.label({
+			Size = UDim2.new(1, -200, 0, 18),
+			Position = UDim2.fromOffset(14, 33),
+			TextXAlignment = Enum.TextXAlignment.Left,
+			TextColor3 = Theme.Muted,
+			Font = Theme.BodyFont,
+			ZIndex = 23,
+			Parent = gr,
+		})
+		local gb = Theme.button({
+			Size = UDim2.fromOffset(170, 42),
+			Position = UDim2.new(1, -180, 0, 7),
+			ZIndex = 23,
+			Parent = gr,
+		})
+		gb.Activated:Connect(function()
+			remotes.ClaimGift:FireServer(gi)
+		end)
+		giftRows[gi] = { title = title, sub = sub, button = gb, gift = g }
+	end
+	local function giftRefresh()
+		local sec = attr("GiftSec", 0)
+		local claimed = claimedGiftSet()
+		for gi, gr in giftRows do
+			local g = gr.gift
+			gr.title.Text = "🎁 " .. g.Minutes .. " min   +" .. Format.short(rewardScale(g.Mult)) .. " 🏆" .. (if g.PotionSeconds > 0 then "  +🧪" else "")
+			local left = g.Minutes * 60 - sec
+			if claimed[gi] then
+				gr.sub.Text = "Claimed"
+				gr.button.Text = "DONE ✓"
+				gr.button.BackgroundColor3 = Theme.Muted
+			elseif left <= 0 then
+				gr.sub.Text = "Ready!"
+				gr.button.Text = "CLAIM"
+				gr.button.BackgroundColor3 = Theme.Green
+			else
+				gr.sub.Text = "Keep playing to unlock"
+				gr.button.Text = Format.time(left)
+				gr.button.BackgroundColor3 = Theme.PanelLight
+			end
+		end
+	end
+	table.insert(refreshers, giftRefresh)
+	player:GetAttributeChangedSignal("GiftSec"):Connect(function()
+		if dailyPanel.Visible then
+			giftRefresh()
+		end
+	end)
 end
 
 local function buildQuests()
@@ -438,7 +673,20 @@ local function buildQuests()
 		end)
 		rows[i] = { title = title, fill = fill, prog = prog, button = b, frame = r }
 	end
+	local trio = Theme.label({
+		Size = UDim2.new(1, -12, 0, 40),
+		TextColor3 = Color3.fromRGB(255, 200, 120),
+		Font = Theme.BodyFont,
+		TextWrapped = true,
+		LayoutOrder = 5,
+		ZIndex = 22,
+		Parent = list,
+	})
 	table.insert(refreshers, function()
+		local streak = attr("TrioStreak", 0)
+		trio.Text = if attr("TrioDone", false)
+			then "DAILY TRIO done today! Streak: " .. streak .. " day(s). Day " .. Config.TrioStreakDays .. " gives a free potion."
+			else "Claim all 3 quests today for the DAILY TRIO bonus (" .. Config.TrioMult .. "x your best reward). Streak: " .. streak
 		local ok, data = pcall(HttpService.JSONDecode, HttpService, attr("Quests", "[]"))
 		if not ok or type(data) ~= "table" then
 			data = {}
@@ -597,7 +845,7 @@ local function buildSide()
 	})
 	new("UIListLayout", { Padding = UDim.new(0, 8), SortOrder = Enum.SortOrder.LayoutOrder, Parent = right })
 	local defs = {
-		{ "Shop", "👟", "BOOTS", Theme.Accent },
+		{ "Shop", "👟", "SHOP", Theme.Accent },
 		{ "Rebirth", "🔁", "REBIRTH", Theme.Pink },
 		{ "Store", "💎", "STORE", Theme.Gold },
 		{ "Daily", "🎁", "DAILY", Theme.Green },
@@ -715,6 +963,12 @@ function Hud.nextGoal(): string?
 			return "Next: buy " .. boot.Name .. " 👟"
 		end
 	end
+	local ownedPets = ownedPetSet()
+	for i, pet in Config.Companions do
+		if not ownedPets[i] and wins >= pet.Cost then
+			return "Next: adopt " .. pet.Name .. " 🐾"
+		end
+	end
 	local n = Hud.nextStage()
 	if not n then
 		return "Next: reach the FINISH 🏁"
@@ -802,6 +1056,16 @@ local function refreshTop()
 	if attr("PotionLeft", 0) > 0 then
 		table.insert(boosts, { "🧪 3x " .. Format.time(attr("PotionLeft", 0)), Theme.Pink })
 	end
+	local petDef = Config.Companions[attr("Pet", 0)]
+	if petDef then
+		table.insert(boosts, { "🐾 " .. petDef.Name .. " +" .. math.floor(petDef.Bonus * 100) .. "%", petDef.Glow })
+	end
+	local goalLeft = (ReplicatedStorage:GetAttribute("GoalBoostEnds") or 0) - workspace:GetServerTimeNow()
+	if goalLeft > 0 then
+		table.insert(boosts, { "🌠 BOOST x" .. Config.Goal.BoostMult .. " " .. Format.time(goalLeft), Color3.fromRGB(255, 240, 120) })
+	else
+		table.insert(boosts, { "🌠 Shards " .. (ReplicatedStorage:GetAttribute("GoalProgress") or 0) .. "/" .. (ReplicatedStorage:GetAttribute("GoalTarget") or Config.Goal.BaseTarget), Color3.fromRGB(120, 255, 240) })
+	end
 	local friends = attr("Friends", 0)
 	if friends > 0 then
 		table.insert(boosts, { "👥 +" .. math.floor(math.min(friends * Config.FriendBoostPer, Config.FriendBoostMax) * 100) .. "% friends", Theme.Accent })
@@ -841,9 +1105,15 @@ local function refreshTop()
 			canBuy = true
 		end
 	end
+	local ownedPets = ownedPetSet()
+	for i, pet in Config.Companions do
+		if not ownedPets[i] and wins >= pet.Cost then
+			canBuy = true
+		end
+	end
 	Hud.setDot("Shop", canBuy)
 	Hud.setDot("Rebirth", speed >= Config.RebirthCost(attr("Rebirths", 0)))
-	Hud.setDot("Daily", attr("DailyReady", false))
+	Hud.setDot("Daily", attr("DailyReady", false) or attr("GiftReady", false))
 	Hud.setDot("Quests", attr("QuestReady", false))
 	local slowBtn = sideButtons["Slow"]
 	local slowLabel = slowBtn and slowBtn:FindFirstChild("Label") :: TextLabel?
@@ -926,6 +1196,7 @@ function Hud.build()
 	buildSide()
 	buildShop()
 	buildRebirth()
+	buildPets()
 	buildStore()
 	buildDaily()
 	buildQuests()
@@ -941,8 +1212,11 @@ function Hud.build()
 			end
 		end
 	end
-	for _, name in { "Speed", "Gain", "Wins", "Rebirths", "Boot", "OwnedBoots", "PotionLeft", "Checkpoint", "Friends", "DailyReady", "DailyDay", "Pass_Speed2x", "Pass_Wins2x", "Pass_VIP", "Slow", "Quests", "QuestReady" } do
+	for _, name in { "Speed", "Gain", "Wins", "Rebirths", "Boot", "OwnedBoots", "PotionLeft", "Checkpoint", "Friends", "DailyReady", "DailyDay", "Pass_Speed2x", "Pass_Wins2x", "Pass_VIP", "Slow", "Quests", "QuestReady", "Pet", "OwnedPets", "GiftReady", "GiftClaimed", "TrioDone", "TrioStreak" } do
 		player:GetAttributeChangedSignal(name):Connect(refreshAll)
+	end
+	for _, name in { "GoalProgress", "GoalTarget", "GoalBoostEnds" } do
+		ReplicatedStorage:GetAttributeChangedSignal(name):Connect(refreshAll)
 	end
 	refreshAll()
 end

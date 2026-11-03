@@ -10,11 +10,12 @@ local UserInputService = game:GetService("UserInputService")
 local TextChatService = game:GetService("TextChatService")
 
 local Config = require(ReplicatedStorage.Shared.Config)
-local Format = require(ReplicatedStorage.Shared.Format)
 local Theme = require(script.Parent.Theme)
 local Sfx = require(script.Parent.Sfx)
 local Hud = require(script.Parent.Hud)
 local Gates = require(script.Parent.Gates)
+local Pets = require(script.Parent.Pets)
+local Ambience = require(script.Parent.Ambience)
 
 local player = Players.LocalPlayer
 local remotes = ReplicatedStorage:WaitForChild("Remotes")
@@ -25,6 +26,8 @@ end
 
 Hud.build()
 Sfx.startMusic()
+Pets.start()
+Ambience.start()
 
 -- ===== onboarding =====
 -- Steps: 1 run to gate, 2 gate open -> go through to the pad, 3 got wins -> open the shop, done.
@@ -131,7 +134,6 @@ local jumpShort = if UserInputService.TouchEnabled then "Tap ⬆ to jump" else "
 local function hintText(): string?
 	local speed = (player:GetAttribute("Speed") :: number?) or 0
 	local cp = (player:GetAttribute("Checkpoint") :: number?) or 0
-	local n = Hud.nextStage()
 	local req1 = Config.Stages[1].Req
 	-- the tutorial step follows real (server) state so it can never go stale
 	if tutorialStep < 3 then
@@ -268,11 +270,37 @@ if player.Character then
 	task.spawn(faceCamera, player.Character)
 end
 
+-- Short sparkle burst on the local character (rewards, purchases, server goal). Cheap: one emitter, freed after 1 s.
+local function burstAtCharacter(color: Color3, count: number)
+	local char = player.Character
+	local hrp = char and char:FindFirstChild("HumanoidRootPart") :: BasePart?
+	if not hrp then
+		return
+	end
+	local att = Instance.new("Attachment")
+	att.Parent = hrp
+	local pe = Instance.new("ParticleEmitter")
+	pe.Texture = "rbxasset://textures/particles/sparkles_main.dds"
+	pe.Rate = 0
+	pe.Speed = NumberRange.new(10, 22)
+	pe.Lifetime = NumberRange.new(0.5, 0.9)
+	pe.SpreadAngle = Vector2.new(180, 180)
+	pe.Size = NumberSequence.new(1.1, 0)
+	pe.Color = ColorSequence.new(color, color:Lerp(Color3.new(1, 1, 1), 0.5))
+	pe.LightEmission = 0.6
+	pe.Parent = att
+	pe:Emit(count)
+	task.delay(1.2, function()
+		att:Destroy()
+	end)
+end
+
 -- ===== notifications from the server =====
 remotes.Notify.OnClientEvent:Connect(function(kind: string, text: string, extra: any)
 	if kind == "wins" then
 		Sfx.play("wins")
 		Hud.toast(text, Theme.Gold)
+		burstAtCharacter(Theme.Gold, 40)
 		if not firstWinsSeen then
 			firstWinsSeen = true
 			if tutorialStep <= 2 then
@@ -285,9 +313,12 @@ remotes.Notify.OnClientEvent:Connect(function(kind: string, text: string, extra:
 	elseif kind == "error" then
 		Sfx.play("error")
 		Hud.toast(text, Theme.Red)
-	elseif kind == "buy" or kind == "purchase" then
+	elseif kind == "buy" or kind == "purchase" or kind == "daily" then
 		Sfx.play("buy")
 		Hud.toast(text, Theme.Green)
+		if kind == "buy" then
+			burstAtCharacter(Color3.fromRGB(120, 255, 160), 24)
+		end
 	elseif kind == "rebirth" then
 		Sfx.play("rebirth")
 		if player.Character then
@@ -332,9 +363,14 @@ remotes.Notify.OnClientEvent:Connect(function(kind: string, text: string, extra:
 		task.spawn(playIntro)
 	elseif kind == "announce" then
 		Hud.toast(text, Theme.Accent)
-	elseif kind == "daily" then
-		Sfx.play("buy")
+	elseif kind == "goal" then
+		Sfx.play("rebirth")
+		Hud.toast(text, Color3.fromRGB(255, 240, 120))
+		burstAtCharacter(Color3.fromRGB(255, 240, 120), 60)
+	elseif kind == "gift" then
+		Sfx.play("gate")
 		Hud.toast(text, Theme.Green)
+		Hud.pulse("Daily")
 	else
 		Hud.toast(text, Theme.Text)
 	end
